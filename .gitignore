@@ -1,0 +1,26 @@
+notes.md
+structure.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Test/cache output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editor/system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
