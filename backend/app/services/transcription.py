@@ -1,11 +1,13 @@
 import tempfile, os
 from faster_whisper import WhisperModel
+from pathlib import Path 
+
 
 model = WhisperModel("base", device="cpu", compute_type="int8")
 
 
 
-def transcribe_audio(audio_bytes: bytes, suffix:str='.m4a'):
+def transcribe_audio(audio_bytes: bytes, suffix:str = ".webm"):
     
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp:
         temp.write(audio_bytes)

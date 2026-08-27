@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cortext</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            background: #101114;
+            color: #f4f4f5;
+            font-family: Arial, sans-serif;
+        }
+
+        main {
+            width: min(92vw, 520px);
+            padding: 32px;
+            border: 1px solid #2a2d34;
+            border-radius: 8px;
+            background: #17191f;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        p {
+            margin: 0;
+            color: #a1a1aa;
+            line-height: 1.5;
+        }
+
+        button {
+            width: 100%;
+            height: 48px;
+            margin: 24px 0 16px;
+            border: 0;
+            border-radius: 6px;
+            background: #4f8cff;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3d7af0;
+        }
+
+        button.recording {
+            background: #ef4444;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #status {
+            min-height: 24px;
+            margin-bottom: 16px;
+            color: #d4d4d8;
+        }
+
+        #result {
+            min-height: 120px;
+            margin: 0;
+            padding: 16px;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            border: 1px solid #2a2d34;
+            border-radius: 6px;
+            background: #0d0e11;
+            color: #f4f4f5;
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Cortext</h1>
+        <p>Record audio and send it to the local transcription backend.</p>
+
+        <button id="recordButton" type="button">Start Recording</button>
+        <p id="status">Ready</p>
+        <pre id="result"></pre>
+    </main>
+
+    <script>
+        const API_URL = "http://localhost:8001/transcribe";
+
+        const recordButton = document.getElementById("recordButton");
+        const statusText = document.getElementById("status");
+        const resultText = document.getElementById("result");
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let stream = null;
+
+        function getAudioMimeType() {
+            if (MediaRecorder.isTypeSupported("audio/webm")) {
+                return "audio/webm";
+            }
+
+        }
+
+        async function uploadAudio(audioBlob) {
+            const formData = new FormData();
+            const extension = audioBlob.type.includes("mp4") ? "mp4" : "webm";
+
+            formData.append("file", audioBlob, `recording.${extension}`);
+
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Upload failed with status ${response.status}`);
+            }
+
+            return response.json();
+        }
+
+        async function startRecording() {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            audioChunks = [];
+            const mimeType = getAudioMimeType();
+            mediaRecorder = new MediaRecorder(
+                stream,
+                mimeType ? { mimeType } : undefined,
+            );
+
+            mediaRecorder.addEventListener("dataavailable", (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            });
+
+            mediaRecorder.addEventListener("stop", async () => {
+                recordButton.disabled = true;
+                recordButton.classList.remove("recording");
+                recordButton.textContent = "Start Recording";
+                statusText.textContent = "Uploading and transcribing...";
+
+                try {
+                    const audioBlob = new Blob(audioChunks, {
+                        type: mediaRecorder.mimeType || "audio/webm",
+                    });
+
+                    const data = await uploadAudio(audioBlob);
+                    statusText.textContent = data.message || "Done";
+                    resultText.textContent = data.text || "";
+                } catch (error) {
+                    statusText.textContent = "Something went wrong.";
+                    resultText.textContent = error.message;
+                } finally {
+                    if (stream) {
+                        stream.getTracks().forEach((track) => track.stop());
+                    }
+
+                    recordButton.disabled = false;
+                    stream = null;
+                }
+            });
+
+            mediaRecorder.start();
+            recordButton.classList.add("recording");
+            recordButton.textContent = "Stop Recording";
+            statusText.textContent = "Recording...";
+            resultText.textContent = "";
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+            }
+        }
+
+        recordButton.addEventListener("click", async () => {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                stopRecording();
+                return;
+            }
+
+            try {
+                await startRecording();
+            } catch (error) {
+                statusText.textContent = "Microphone access failed.";
+                resultText.textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>
