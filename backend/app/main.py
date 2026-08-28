@@ -1,16 +1,15 @@
 from io import BytesIO
 from pathlib import Path
-
 import qrcode
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
 from app.api.routes.transcription import router as transcription_router
+from app.config.config import SESSION_TOKEN
 
 
 WEB_INDEX = Path(__file__).resolve().parents[2] / "web" / "index.html"
-
 
 app = FastAPI(
     title="Cortext Backend",
@@ -53,7 +52,7 @@ def web_app():
 def get_app_url(request: Request) -> str:
     scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
     host = request.headers.get("host", request.url.netloc)
-    return f"{scheme}://{host}/app"
+    return f"{scheme}://{host}/app?token={SESSION_TOKEN}"
 
 
 @app.get("/qr", response_class=HTMLResponse)

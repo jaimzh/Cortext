@@ -6,6 +6,8 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app.schemas.transcription import TranscriptionResponse
 from app.services.copy_n_paste import insert_text
 from app.services.transcription import transcribe_audio
+from app.config.config import SESSION_TOKEN
+
 
 router = APIRouter()
 
@@ -14,7 +16,13 @@ router = APIRouter()
 async def transcribe(
     file: UploadFile = File(...),
     paste: bool = Form(True),
+    token: str = Form(...),
 ):
+    
+    if token != SESSION_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid session token.")
+
+
     suffix = Path(file.filename or "").suffix or ".webm"
     audio_bytes = await file.read()
 

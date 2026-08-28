@@ -123,6 +123,9 @@
         const statusText = document.getElementById("status");
         const resultText = document.getElementById("result");
 
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token") || "";
+
         let mediaRecorder = null;
         let audioChunks = [];
         let stream = null;
@@ -137,7 +140,7 @@
         async function uploadAudio(audioBlob) {
             const formData = new FormData();
             const extension = audioBlob.type.includes("mp4") ? "mp4" : "webm";
-
+            formData.append("token", token);
             formData.append("file", audioBlob, `recording.${extension}`);
             formData.append("paste", pasteToggle.checked ? "true" : "false");
 
