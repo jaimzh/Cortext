@@ -65,6 +65,21 @@
             opacity: 0.6;
         }
 
+        label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            color: #d4d4d8;
+            font-size: 14px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4f8cff;
+        }
+
         #status {
             min-height: 24px;
             margin-bottom: 16px;
@@ -92,14 +107,19 @@
         <p>Record audio and send it to the local transcription backend.</p>
 
         <button id="recordButton" type="button">Start Recording</button>
+        <label>
+            <input id="pasteToggle" type="checkbox" checked>
+            Paste after transcription
+        </label>
         <p id="status">Ready</p>
         <pre id="result"></pre>
     </main>
 
     <script>
-        const API_URL = "http://localhost:8001/transcribe";
+       const API_URL = `${window.location.origin}/transcribe`;
 
         const recordButton = document.getElementById("recordButton");
+        const pasteToggle = document.getElementById("pasteToggle");
         const statusText = document.getElementById("status");
         const resultText = document.getElementById("result");
 
@@ -119,6 +139,7 @@
             const extension = audioBlob.type.includes("mp4") ? "mp4" : "webm";
 
             formData.append("file", audioBlob, `recording.${extension}`);
+            formData.append("paste", pasteToggle.checked ? "true" : "false");
 
             const response = await fetch(API_URL, {
                 method: "POST",
