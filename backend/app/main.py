@@ -8,6 +8,8 @@ from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from app.api.routes.transcription import router as transcription_router
 from app.config.config import SESSION_TOKEN
 
+import socket 
+
 
 WEB_INDEX = Path(__file__).resolve().parents[2] / "web" / "index.html"
 
@@ -48,13 +50,28 @@ def health_check():
 def web_app():
     return FileResponse(WEB_INDEX)
 
-
+def get_lan_ip() -> str:
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.connect(("8.8.8.8", 80))
+        return sock.getsockname()[0]
+    
 def get_app_url(request: Request) -> str:
     scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
     host = request.headers.get("host", request.url.netloc)
+    
+    if host.startswith("127.0.0.1") or host.startswith("localhost"):
+        host = f"{get_lan_ip()}:8001"
+        
     return f"{scheme}://{host}/app?token={SESSION_TOKEN}"
 
 
+
+
+
+
+
+    
+    
 @app.get("/qr", response_class=HTMLResponse)
 def qr_page(request: Request):
     app_url = get_app_url(request)
