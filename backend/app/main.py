@@ -1,14 +1,11 @@
-from io import BytesIO
 from pathlib import Path
-import qrcode
-from fastapi import FastAPI, Request
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse
 
+from app.api.routes.qr import router as qr_router
 from app.api.routes.transcription import router as transcription_router
-from app.config.config import SESSION_TOKEN
-
-import socket 
 
 
 WEB_INDEX = Path(__file__).resolve().parents[2] / "web" / "index.html"
@@ -31,6 +28,7 @@ app.add_middleware(
 )
 
 app.include_router(transcription_router)
+app.include_router(qr_router)
 
 @app.get("/")
 def root():
@@ -49,97 +47,3 @@ def health_check():
 @app.get("/app")
 def web_app():
     return FileResponse(WEB_INDEX)
-
-def get_lan_ip() -> str:
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.connect(("8.8.8.8", 80))
-        return sock.getsockname()[0]
-    
-def get_app_url(request: Request) -> str:
-    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = request.headers.get("host", request.url.netloc)
-    
-    if host.startswith("127.0.0.1") or host.startswith("localhost"):
-        host = f"{get_lan_ip()}:8001"
-        
-    return f"{scheme}://{host}/app?token={SESSION_TOKEN}"
-
-
-
-
-
-
-
-    
-    
-@app.get("/qr", response_class=HTMLResponse)
-def qr_page(request: Request):
-    app_url = get_app_url(request)
-    return f"""
-    <!doctype html>
-    <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Cortext QR</title>
-        <style>
-            body {{
-                min-height: 100vh;
-                margin: 0;
-                display: grid;
-                place-items: center;
-                background: #101114;
-                color: #f4f4f5;
-                font-family: Arial, sans-serif;
-            }}
-
-            main {{
-                width: min(92vw, 420px);
-                padding: 32px;
-                border: 1px solid #2a2d34;
-                border-radius: 8px;
-                background: #17191f;
-                text-align: center;
-            }}
-
-            h1 {{
-                margin: 0 0 16px;
-            }}
-
-            img {{
-                width: 260px;
-                height: 260px;
-                padding: 12px;
-                border-radius: 8px;
-                background: white;
-            }}
-
-            a {{
-                display: block;
-                margin-top: 16px;
-                color: #8ab4ff;
-                overflow-wrap: break-word;
-            }}
-        </style>
-    </head>
-    <body>
-        <main>
-            <h1>Cortext</h1>
-            <img src="/qr.png" alt="QR code for Cortext recorder">
-            <a href="{app_url}">{app_url}</a>
-        </main>
-    </body>
-    </html>
-    """
-
-
-@app.get("/qr.png")
-def qr_image(request: Request):
-    app_url = get_app_url(request)
-    image = qrcode.make(app_url)
-    buffer = BytesIO()
-
-    image.save(buffer, format="PNG")
-    buffer.seek(0)
-
-    return StreamingResponse(buffer, media_type="image/png")
