@@ -1,20 +1,14 @@
 from io import BytesIO
-import socket
 
 import qrcode
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from app.config.config import SESSION_TOKEN
+from app.utils.network import get_lan_ip
 
 
 router = APIRouter()
-
-
-def get_lan_ip() -> str:
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.connect(("8.8.8.8", 80))
-        return sock.getsockname()[0]
 
 
 def get_app_url(request: Request) -> str:
