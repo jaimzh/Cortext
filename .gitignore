@@ -12,6 +12,7 @@ venv/
 env/
 .env
 backend/certs/
+backend/.session_token
 
 # Test/cache output
 .pytest_cache/

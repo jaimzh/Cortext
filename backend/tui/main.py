@@ -1,8 +1,53 @@
+from pathlib import Path
+import sys
+
+import qrcode
 from pyfiglet import figlet_format
+
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(BACKEND_ROOT))
+
+from app.config.config import SESSION_TOKEN
+from app.utils.network import get_lan_ip
+
+
+def get_local_app_url() -> str:
+    return f"https://{get_lan_ip()}:8001/app?token={SESSION_TOKEN}"
+
+
+def make_qr_text(url: str) -> str:
+    qr = qrcode.QRCode(
+        border=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+
+    matrix = qr.get_matrix()
+    rows = []
+
+    for index in range(0, len(matrix), 2):
+        top_row = matrix[index]
+        bottom_row = matrix[index + 1] if index + 1 < len(matrix) else [False] * len(top_row)
+        line = ""
+        for top_cell, bottom_cell in zip(top_row, bottom_row):
+            if top_cell and bottom_cell:
+                line += "█"
+            elif top_cell:
+                line += "▀"
+            elif bottom_cell:
+                line += "▄"
+            else:
+                line += " "
+        rows.append(line)
+
+    return "\n".join(rows)
 
 
 class HomeScreen(Screen):
@@ -73,12 +118,16 @@ class QrScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
+        app_url = get_local_app_url()
+        qr_text = make_qr_text(app_url)
+
         yield Header()
         yield Container(
             Vertical(
                 Static("Scan to connect", classes="page-title"),
-                Static("[ QR code will go here ]", id="qr-placeholder"),
                 Static("Open your phone camera and scan this QR code.", classes="page-subtitle"),
+                Static(app_url, id="app-url"),
+                Static(qr_text, id="qr-code"),
                 Static("Waiting for phone...", id="connection-status"),
                 id="qr",
             ),
@@ -172,12 +221,11 @@ class CortextApp(App):
         margin-top: 1;
     }
 
-    #qr-placeholder {
+    #qr-code {
         color: $heading;
-        border: round $subtle;
-        height: 10;
-        margin-top: 3;
-        padding: 1 4;
+        background: $background;
+        margin-top: 2;
+        margin-bottom: 2;
         text-align: center;
         content-align: center middle;
     }
@@ -185,6 +233,13 @@ class CortextApp(App):
     #connection-status,
     #session-status {
         color: $subtle;
+        margin-top: 2;
+        text-align: center;
+        width: 100%;
+    }
+
+    #app-url {
+        color: $muted;
         margin-top: 2;
         text-align: center;
         width: 100%;
