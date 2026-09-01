@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cortext</title>
     <style>
+Favorite shows         :root {
+            --background: #111111;
+            --surface: #17191f;
+            --surface-deep: #0d0e11;
+            --border: #2a2d34;
+            --text: #e5e7eb;
+            --heading: #ffffff;
+            --muted: #9ca3af;
+            --subtle: #6b7280;
+            --accent: #0178d4;
+            --accent-dark: #0178d4;
+            --button-label: #ddedf9;
+            --button-rim: #6db2ff;
+            --danger: #ef4444;
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -14,63 +30,104 @@
             margin: 0;
             display: grid;
             place-items: center;
-            background: #101114;
-            color: #f4f4f5;
-            font-family: Arial, sans-serif;
+            padding: 24px;
+            background: var(--background);
+            color: var(--text);
+            font-family: Consolas, "Courier New", monospace;
         }
 
         main {
-            width: min(92vw, 520px);
-            padding: 32px;
-            border: 1px solid #2a2d34;
-            border-radius: 8px;
-            background: #17191f;
+            width: min(100%, 740px);
+            padding: 0;
+            background: transparent;
         }
 
-        h1 {
-            margin: 0 0 8px;
-            font-size: 32px;
+        .brand {
+            width: 100%;
+            margin: 0;
+            overflow-x: auto;
+            color: var(--heading);
+            font-size: clamp(8px, 2.4vw, 13px);
             font-weight: 700;
+            line-height: 1.05;
+            white-space: pre;
+            text-align: center;
         }
 
         p {
             margin: 0;
-            color: #a1a1aa;
+            color: var(--muted);
             line-height: 1.5;
         }
 
+        .tagline {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .controls {
+            width: min(100%, 560px);
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+        }
+
         button {
-            width: 100%;
-            height: 48px;
-            margin: 24px 0 16px;
+            display: block;
+            width: 70%;
+            height: 58px;
+            margin: 32px auto 20px;
             border: 0;
-            border-radius: 6px;
-            background: #4f8cff;
+            border-top: 4px solid var(--button-rim);
+            border-bottom: 4px solid #006eb8;
+            border-radius: 0;
+            background: var(--accent-dark);
             color: white;
             font-size: 16px;
             font-weight: 700;
+            font-family: inherit;
             cursor: pointer;
         }
 
+        .button-label {
+            display: inline-block;
+            padding: 2px 10px;
+            background: var(--button-label);
+            color: var(--accent);
+            line-height: 1.2;
+        }
+
         button:hover {
-            background: #3d7af0;
+            background: var(--accent);
+            border-top-color: var(--button-rim);
+            border-bottom-color: #0077c8;
         }
 
         button.recording {
-            background: #ef4444;
+            background: var(--danger);
+            border-top-color: #fca5a5;
+            border-bottom-color: #b91c1c;
+        }
+
+        button.recording .button-label {
+            background: #fee2e2;
+            color: #b91c1c;
         }
 
         button:disabled {
             cursor: not-allowed;
             opacity: 0.6;
         }
+     
 
         label {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 12px;
-            color: #d4d4d8;
+            color: var(--text);
             font-size: 14px;
         }
 
@@ -78,75 +135,127 @@
             display: grid;
             gap: 8px;
             margin-bottom: 16px;
-            color: #d4d4d8;
+            color: var(--text);
             font-size: 14px;
+        }
+
+        .select-wrap {
+            position: relative;
+        }
+
+        .select-wrap::after {
+            content: "v";
+            position: absolute;
+            top: 50%;
+            right: 14px;
+            color: var(--muted);
+            pointer-events: none;
+            transform: translateY(-50%);
         }
 
         select {
             width: 100%;
-            height: 42px;
-            padding: 0 12px;
-            border: 1px solid #2a2d34;
+            height: 46px;
+            padding: 0 40px 0 12px;
+            border: 1px solid var(--border);
             border-radius: 6px;
-            background: #0d0e11;
-            color: #f4f4f5;
+            background: var(--surface-deep);
+            color: var(--heading);
             font: inherit;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        select:focus {
+            border-color: var(--accent);
+            outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+        }
+
+        select:hover {
+            border-color: var(--accent);
         }
 
         input[type="checkbox"] {
             width: 18px;
             height: 18px;
-            accent-color: #4f8cff;
+            accent-color: var(--accent);
         }
 
         #status {
+            width: 100%;
             min-height: 24px;
             margin-bottom: 16px;
-            color: #d4d4d8;
+            color: var(--text);
+            text-align: left;
         }
 
         #result {
+            width: 100%;
             min-height: 120px;
             margin: 0;
             padding: 16px;
             overflow-wrap: break-word;
             white-space: pre-wrap;
-            border: 1px solid #2a2d34;
+            border: 1px solid var(--border);
             border-radius: 6px;
-            background: #0d0e11;
-            color: #f4f4f5;
-            font-family: Arial, sans-serif;
+            background: var(--surface-deep);
+            color: var(--heading);
+            font-family: inherit;
             line-height: 1.5;
+        }
+
+        @media (max-width: 420px) {
+            main {
+                padding: 22px;
+            }
+
+            .brand {
+                font-size: 8px;
+            }
         }
     </style>
 </head>
 <body>
     <main>
-        <h1>Cortext</h1>
-        <p>Record audio and send it to the local transcription backend.</p>
+        <pre class="brand" aria-label="Cortext">   _____ ____  _____ _______ ________   _________ 
+ / ____/ __ \|  __ \__   __|  ____\ \ / /__   __|
+| |   | |  | | |__) | | |  | |__   \ V /   | |   
+| |   | |  | |  _  /  | |  |  __|   > <    | |   
+| |___| |__| | | \ \  | |  | |____ / . \   | |   
+ \_____\____/|_|  \_\ |_|  |______/_/ \_\  |_|   
+                                                </pre>
+        <p class="tagline">Your voice, anywhere.</p>
 
-        <button id="recordButton" type="button">Start Recording</button>
-        <label>
-            <input id="pasteToggle" type="checkbox" checked>
-            Paste after transcription
-        </label>
-        <div class="field">
-            <span>Transcription model</span>
-            <select id="modelSelect">
-                <option value="tiny">Tiny - fastest</option>
-                <option value="base" selected>Base - balanced</option>
-                <option value="small">Small - more accurate</option>
-                <option value="medium">Medium - slowest</option>
-            </select>
-        </div>
-        <p id="status">Ready</p>
-        <pre id="result"></pre>
+        <section class="controls">
+            <button id="recordButton" type="button">
+                <span id="recordLabel" class="button-label">Start Recording</span>
+            </button>
+            <label>
+                <input id="pasteToggle" type="checkbox" checked>
+                Paste after transcription
+            </label>
+            <div class="field">
+                <span>Transcription model</span>
+                <div class="select-wrap">
+                    <select id="modelSelect">
+                        <option value="tiny">Tiny - fastest</option>
+                        <option value="base" selected>Base - balanced</option>
+                        <option value="small">Small - more accurate</option>
+                        <option value="medium">Medium - slowest</option>
+                    </select>
+                </div>
+            </div>
+            <p id="status">Ready</p>
+            <pre id="result"></pre>
+        </section>
     </main>
 
     <script>
-       const API_URL = `${window.location.origin}/transcribe`;
+        const API_URL = `${window.location.origin}/transcribe`;
+        const MODELS_URL = `${window.location.origin}/models`;
 
         const recordButton = document.getElementById("recordButton");
+        const recordLabel = document.getElementById("recordLabel");
         const pasteToggle = document.getElementById("pasteToggle");
         const modelSelect = document.getElementById("modelSelect");
         const statusText = document.getElementById("status");
@@ -158,6 +267,39 @@
         let mediaRecorder = null;
         let audioChunks = [];
         let stream = null;
+
+        function getModelOptionText(model) {
+            const status = model.installed ? model.description : "download from TUI";
+            return `${model.label} - ${status}`;
+        }
+
+        async function loadModels() {
+            if (!token) {
+                return;
+            }
+
+            const response = await fetch(`${MODELS_URL}?token=${encodeURIComponent(token)}`);
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            modelSelect.innerHTML = "";
+
+            for (const model of data.models) {
+                const option = document.createElement("option");
+                option.value = model.name;
+                option.textContent = getModelOptionText(model);
+                option.disabled = !model.installed;
+
+                if (model.name === data.default && model.installed) {
+                    option.selected = true;
+                }
+
+                modelSelect.appendChild(option);
+            }
+        }
 
         function getAudioMimeType() {
             if (MediaRecorder.isTypeSupported("audio/webm")) {
@@ -205,7 +347,7 @@
             mediaRecorder.addEventListener("stop", async () => {
                 recordButton.disabled = true;
                 recordButton.classList.remove("recording");
-                recordButton.textContent = "Start Recording";
+                recordLabel.textContent = "Start Recording";
                 statusText.textContent = "Uploading and transcribing...";
 
                 try {
@@ -231,7 +373,7 @@
 
             mediaRecorder.start();
             recordButton.classList.add("recording");
-            recordButton.textContent = "Stop Recording";
+            recordLabel.textContent = "Stop Recording";
             statusText.textContent = "Recording...";
             resultText.textContent = "";
         }
@@ -255,6 +397,8 @@
                 resultText.textContent = error.message;
             }
         });
+
+        loadModels();
     </script>
 </body>
 </html>

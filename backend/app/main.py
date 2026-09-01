@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from app.api.routes.models import router as models_router
 from app.api.routes.qr import router as qr_router
 from app.api.routes.session import router as session_router
 from app.api.routes.transcription import router as transcription_router
@@ -33,6 +34,7 @@ app.add_middleware(
 app.include_router(transcription_router)
 app.include_router(qr_router)
 app.include_router(session_router)
+app.include_router(models_router)
 
 @app.get("/")
 def root():

@@ -6,7 +6,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app.schemas.transcription import TranscriptionResponse
 from app.services.copy_n_paste import insert_text
 from app.services.session_state import mark_error, mark_transcribed, mark_transcribing
-from app.services.transcription import transcribe_audio
+from app.services.transcription import ALLOWED_MODEL_NAMES, transcribe_audio
 from app.config.config import SESSION_TOKEN
 
 
@@ -24,6 +24,8 @@ async def transcribe(
     if token != SESSION_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid session token.")
 
+    if model not in ALLOWED_MODEL_NAMES:
+        raise HTTPException(status_code=400, detail="Unsupported transcription model.")
 
     suffix = Path(file.filename or "").suffix or ".webm"
     audio_bytes = await file.read()

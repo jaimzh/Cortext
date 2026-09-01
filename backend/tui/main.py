@@ -1,8 +1,11 @@
 from pathlib import Path
+import asyncio
 import json
 import ssl
 import sys
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request
 from urllib.request import urlopen
 
 import qrcode
@@ -29,11 +32,52 @@ def get_session_status_url() -> str:
     return f"https://127.0.0.1:8001/session/status?token={SESSION_TOKEN}"
 
 
+def get_models_url() -> str:
+    return f"https://127.0.0.1:8001/models?token={SESSION_TOKEN}"
+
+
+def get_model_download_url(model_name: str) -> str:
+    query = urlencode({"model": model_name, "token": SESSION_TOKEN})
+    return f"https://127.0.0.1:8001/models/download?{query}"
+
+
 def fetch_session_status() -> dict:
     context = ssl._create_unverified_context()
 
     with urlopen(get_session_status_url(), context=context, timeout=1) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def fetch_model_status() -> dict:
+    context = ssl._create_unverified_context()
+
+    with urlopen(get_models_url(), context=context, timeout=2) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def download_model_from_backend(model_name: str) -> dict:
+    context = ssl._create_unverified_context()
+    request = Request(get_model_download_url(model_name), method="POST")
+
+    with urlopen(request, context=context, timeout=120) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def get_backend_error_message(error: Exception) -> str:
+    if isinstance(error, HTTPError):
+        if error.code == 401:
+            return "Invalid session token. Restart backend."
+        if error.code == 404:
+            return "Backend route missing. Restart backend."
+        return f"Backend returned {error.code}"
+
+    if isinstance(error, TimeoutError):
+        return "Request timed out. Try again."
+
+    if isinstance(error, URLError):
+        return "Could not reach backend. Check server."
+
+    return "Unexpected backend error"
 
 
 def make_qr_text(url: str) -> str:
@@ -76,7 +120,11 @@ class HomeScreen(Screen):
                     Button("New Session", id="new-session", variant="primary"),
                     id="actions",
                 ),
-                Static("No active session", id="session-status"),
+                Horizontal(
+                    Button("Models", id="models-button"),
+                    id="models-action",
+                    classes="button-row",
+                ),
                 id="home",
             ),
             id="shell",
@@ -86,6 +134,112 @@ class HomeScreen(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "new-session":
             self.app.push_screen("connection")
+        elif event.button.id == "models-button":
+            self.app.push_screen("models")
+
+
+class ModelsScreen(Screen):
+    BINDINGS = [
+        ("r", "refresh", "Refresh"),
+        ("escape", "back", "Back"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Container(
+            Vertical(
+                Static("Models", classes="page-title"),
+                Static("Manage local transcription models.", classes="page-subtitle"),
+                Vertical(id="models-list"),
+                Static("", id="models-status"),
+                id="models",
+            ),
+            id="shell",
+        )
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.refresh_models()
+
+    def refresh_models(self) -> None:
+        models_list = self.query_one("#models-list", Vertical)
+        models_status = self.query_one("#models-status", Static)
+        models_list.remove_children()
+
+        try:
+            data = fetch_model_status()
+        except HTTPError as error:
+            models_status.update(get_backend_error_message(error))
+            return
+        except TimeoutError:
+            models_status.update("Request timed out. Press R to retry.")
+            return
+        except URLError:
+            models_status.update("Could not refresh models. Press R to retry.")
+            return
+
+        for model in data["models"]:
+            name = model["name"]
+            label = f"{model['label']} - {model['description']}"
+            status = "Installed" if model["installed"] else "Missing"
+            action = "Installed" if model["installed"] else "Download"
+
+            models_list.mount(
+                Horizontal(
+                    Static(label, classes="model-name"),
+                    Static(status, classes="model-state"),
+                    Button(action, id=f"model-{name}", disabled=model["installed"]),
+                    classes="model-row",
+                )
+            )
+
+        models_status.update("Ready")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if not event.button.id or not event.button.id.startswith("model-"):
+            return
+
+        model_name = event.button.id.removeprefix("model-")
+        button_id = event.button.id
+        models_status = self.query_one("#models-status", Static)
+
+        event.button.disabled = True
+        event.button.label = "Downloading..."
+        event.button.add_class("loading")
+        models_status.update(f"Downloading {model_name}...")
+        models_status.add_class("downloading")
+        self.refresh(layout=True)
+
+        self.set_timer(
+            0.2,
+            lambda: asyncio.create_task(
+                self.download_selected_model(model_name, button_id)
+            ),
+        )
+
+    async def download_selected_model(self, model_name: str, button_id: str) -> None:
+        models_status = self.query_one("#models-status", Static)
+
+        try:
+            await asyncio.to_thread(download_model_from_backend, model_name)
+        except Exception as error:
+            button = self.query_one(f"#{button_id}", Button)
+            button.disabled = False
+            button.label = "Download"
+            button.remove_class("loading")
+            models_status.update(get_backend_error_message(error))
+            models_status.remove_class("downloading")
+            return
+
+        models_status.update(f"{model_name} is ready")
+        models_status.remove_class("downloading")
+        self.refresh_models()
+
+    def action_refresh(self) -> None:
+        self.refresh_models()
+
+    def action_back(self) -> None:
+        self.app.pop_screen()
 
 
 class ConnectionScreen(Screen):
@@ -157,11 +311,14 @@ class QrScreen(Screen):
     def refresh_session_status(self) -> None:
         try:
             status = fetch_session_status()
-        except URLError:
-            self.query_one("#connection-status", Static).update("Backend not reachable")
+        except HTTPError as error:
+            self.query_one("#connection-status", Static).update(
+                get_backend_error_message(error)
+            )
             return
         except TimeoutError:
-            self.query_one("#connection-status", Static).update("Backend not reachable")
+            return
+        except URLError:
             return
 
         if status.get("connected"):
@@ -181,14 +338,6 @@ class QrScreen(Screen):
 
 class CortextApp(App):
     CSS = """
-    $background: #0f1115;
-    $text: #e5e7eb;
-    $heading: #ffffff;
-    $muted: #9ca3af;
-    $subtle: #6b7280;
-    $accent: #3b82f6;
-    $accent-dark: #1d4ed8;
-
     Screen {
         background: $background;
         color: $text;
@@ -202,7 +351,8 @@ class CortextApp(App):
 
     #home,
     #connection,
-    #qr {
+    #qr,
+    #models {
         width: 80;
         height: auto;
         align-horizontal: center;
@@ -210,21 +360,21 @@ class CortextApp(App):
 
     #brand {
         text-style: bold;
-        color: $heading;
+        color: $text;
         text-align: center;
         width: 100%;
     }
 
     #tagline,
     .page-subtitle {
-        color: $muted;
+        color: $text-muted;
         margin-top: 1;
         text-align: center;
         width: 100%;
     }
 
     .page-title {
-        color: $heading;
+        color: $text;
         text-style: bold;
         text-align: center;
         width: 100%;
@@ -244,7 +394,7 @@ class CortextApp(App):
         height: auto;
         align-horizontal: center;
         margin-top: 2;
-        margin-bottom: 2;
+        margin-bottom: 1;
     }
 
     .button-row {
@@ -261,8 +411,54 @@ class CortextApp(App):
         margin-top: 1;
     }
 
+    #models-action {
+        margin-bottom: 2;
+    }
+
+    #models-list {
+        width: 70;
+        height: auto;
+        margin-top: 3;
+    }
+
+    .model-row {
+        width: 100%;
+        height: 3;
+        align: center middle;
+    }
+
+    .model-name {
+        width: 32;
+        color: $text;
+    }
+
+    .model-state {
+        width: 14;
+        color: $text-muted;
+    }
+
+    .model-row Button {
+        width: 18;
+    }
+
+    #models-status {
+        color: $text-muted;
+        margin-top: 2;
+        text-align: center;
+        width: 100%;
+    }
+
+    #models-status.downloading {
+        color: $primary;
+        text-style: bold;
+    }
+
+    Button.loading {
+        text-style: bold;
+    }
+
     #qr-code {
-        color: $heading;
+        color: $text;
         background: $background;
         margin-top: 2;
         margin-bottom: 2;
@@ -270,21 +466,20 @@ class CortextApp(App):
         content-align: center middle;
     }
 
-    #connection-status,
-    #session-status {
-        color: $subtle;
+    #connection-status {
+        color: $text-muted;
         margin-top: 2;
         text-align: center;
         width: 100%;
     }
 
     #connection-status.connected {
-        color: #22c55e;
+        color: $success;
         text-style: bold;
     }
 
     #app-url {
-        color: $muted;
+        color: $text-muted;
         margin-top: 2;
         text-align: center;
         width: 100%;
@@ -298,6 +493,7 @@ class CortextApp(App):
     SCREENS = {
         "home": HomeScreen,
         "connection": ConnectionScreen,
+        "models": ModelsScreen,
         "qr": QrScreen,
     }
 
