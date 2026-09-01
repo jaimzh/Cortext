@@ -1,5 +1,9 @@
 from pathlib import Path
+import json
+import ssl
 import sys
+from urllib.error import URLError
+from urllib.request import urlopen
 
 import qrcode
 from pyfiglet import figlet_format
@@ -19,6 +23,17 @@ from app.utils.network import get_lan_ip
 
 def get_local_app_url() -> str:
     return f"https://{get_lan_ip()}:8001/app?token={SESSION_TOKEN}"
+
+
+def get_session_status_url() -> str:
+    return f"https://127.0.0.1:8001/session/status?token={SESSION_TOKEN}"
+
+
+def fetch_session_status() -> dict:
+    context = ssl._create_unverified_context()
+
+    with urlopen(get_session_status_url(), context=context, timeout=1) as response:
+        return json.loads(response.read().decode("utf-8"))
 
 
 def make_qr_text(url: str) -> str:
@@ -135,6 +150,31 @@ class QrScreen(Screen):
         )
         yield Footer()
 
+    def on_mount(self) -> None:
+        # Keep the QR screen alive by checking whether the phone has opened /app.
+        self.set_interval(1, self.refresh_session_status)
+
+    def refresh_session_status(self) -> None:
+        try:
+            status = fetch_session_status()
+        except URLError:
+            self.query_one("#connection-status", Static).update("Backend not reachable")
+            return
+        except TimeoutError:
+            self.query_one("#connection-status", Static).update("Backend not reachable")
+            return
+
+        if status.get("connected"):
+            connection_status = self.query_one("#connection-status", Static)
+            connection_status.update("Phone connected")
+            connection_status.add_class("connected")
+            # Later, this is where we can move into an ActiveSessionScreen.
+            return
+
+        connection_status = self.query_one("#connection-status", Static)
+        connection_status.update("Waiting for phone...")
+        connection_status.remove_class("connected")
+
     def action_back(self) -> None:
         self.app.pop_screen()
 
@@ -236,6 +276,11 @@ class CortextApp(App):
         margin-top: 2;
         text-align: center;
         width: 100%;
+    }
+
+    #connection-status.connected {
+        color: #22c55e;
+        text-style: bold;
     }
 
     #app-url {

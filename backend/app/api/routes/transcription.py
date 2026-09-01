@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.schemas.transcription import TranscriptionResponse
 from app.services.copy_n_paste import insert_text
+from app.services.session_state import mark_error, mark_transcribed, mark_transcribing
 from app.services.transcription import transcribe_audio
 from app.config.config import SESSION_TOKEN
 
@@ -17,6 +18,7 @@ async def transcribe(
     file: UploadFile = File(...),
     paste: bool = Form(True),
     token: str = Form(...),
+    model: str = Form("base"),
 ):
     
     if token != SESSION_TOKEN:
@@ -30,8 +32,10 @@ async def transcribe(
         raise HTTPException(status_code=400, detail="No audio file received.")
 
     try:
-        text = transcribe_audio(audio_bytes, suffix)
+        mark_transcribing()
+        text = transcribe_audio(audio_bytes, suffix, model)
     except Exception as exc:
+        mark_error("Audio transcription failed.")
         raise HTTPException(
             status_code=500,
             detail="Audio transcription failed.",
@@ -41,10 +45,13 @@ async def transcribe(
         try:
             insert_text(text)
         except Exception as exc:
+            mark_error("Text was transcribed, but paste failed.")
             raise HTTPException(
                 status_code=500,
                 detail="Text was transcribed, but paste failed.",
             ) from exc
+
+    mark_transcribed(text)
     
     return {
         "message": "Audio transcribed",

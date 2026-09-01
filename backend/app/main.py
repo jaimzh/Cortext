@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.api.routes.qr import router as qr_router
+from app.api.routes.session import router as session_router
 from app.api.routes.transcription import router as transcription_router
+from app.config.config import SESSION_TOKEN
+from app.services.session_state import mark_connected
 
 
 WEB_INDEX = Path(__file__).resolve().parents[2] / "web" / "index.html"
@@ -29,6 +32,7 @@ app.add_middleware(
 
 app.include_router(transcription_router)
 app.include_router(qr_router)
+app.include_router(session_router)
 
 @app.get("/")
 def root():
@@ -45,5 +49,8 @@ def health_check():
 
 
 @app.get("/app")
-def web_app():
+def web_app(token: str = ""):
+    if token == SESSION_TOKEN:
+        mark_connected()
+
     return FileResponse(WEB_INDEX)
