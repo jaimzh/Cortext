@@ -1,5 +1,6 @@
 notes.md
 structure.md
+HOW_IT_WORKS.md
 
 # Python
 __pycache__/
@@ -26,3 +27,4 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+MOUSE_TRACKPAD_GUIDE.md
