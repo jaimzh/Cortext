@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.keyboard import router as keyboard_router
 from app.api.routes.models import router as models_router
@@ -15,6 +16,7 @@ from app.services.session_state import mark_connected
 
 
 WEB_INDEX = Path(__file__).resolve().parents[2] / "web" / "index.html"
+WEB_ROOT = WEB_INDEX.parent
 
 app = FastAPI(
     title="Cortext Backend",
@@ -39,6 +41,9 @@ app.include_router(session_router)
 app.include_router(models_router)
 app.include_router(keyboard_router)
 app.include_router(mouse_router)
+
+app.mount("/styles", StaticFiles(directory=WEB_ROOT / "styles"), name="styles")
+app.mount("/scripts", StaticFiles(directory=WEB_ROOT / "scripts"), name="scripts")
 
 @app.get("/")
 def root():
