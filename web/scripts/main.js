@@ -16,6 +16,7 @@ const elements = {
     voicePanel: document.getElementById("voicePanel"),
     trackpadPanel: document.getElementById("trackpadPanel"),
     trackpadPad: document.getElementById("trackpadPad"),
+    trackpadScrollBar: document.getElementById("trackpadScrollBar"),
     sensitivitySlider: document.getElementById("sensitivitySlider"),
     sensitivityValue: document.getElementById("sensitivityValue"),
     keyboardText: document.getElementById("keyboardText"),

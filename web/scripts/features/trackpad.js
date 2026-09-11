@@ -1,12 +1,16 @@
-const LONG_PRESS_MS = 850;
 const DOUBLE_TAP_MS = 260;
-const TAP_MOVE_THRESHOLD = 12;
+const MIN_TAP_MS = 70;
+const TAP_MOVE_THRESHOLD = 18;
 const DRAG_MOVE_THRESHOLD = 8;
 const SCROLL_STEP_FACTOR = 0.3;
+const SCROLL_BAR_STEP_FACTOR = 1.35;
+const SCROLL_BAR_EDGE_RATIO = 0.22;
+const SCROLL_BAR_EDGE_MAX_SPEED = 7;
 
 export function initTrackpad(elements, api) {
     const {
         trackpadPad,
+        trackpadScrollBar,
         sensitivitySlider,
         sensitivityValue,
         statusText,
@@ -16,9 +20,7 @@ export function initTrackpad(elements, api) {
     let pendingDelta = { x: 0, y: 0 };
     let pendingScroll = { x: 0, y: 0 };
     let previousPointerCount = 0;
-    let longPressTimer = null;
     let pendingTapTimer = null;
-    let longPressed = false;
     let tapMoved = false;
     let scrolledSincePress = false;
     let doubleTapArmed = false;
@@ -26,6 +28,11 @@ export function initTrackpad(elements, api) {
     let dragActive = false;
     let moveLoopStarted = false;
     let scrollLoopStarted = false;
+    let tapStartedAt = 0;
+    let scrollBarPointerId = null;
+    let scrollBarPreviousY = 0;
+    let scrollBarEdgeVelocity = 0;
+    let scrollBarEdgeLoopStarted = false;
 
     async function sendMouseMove(dx, dy) {
         try {
@@ -106,11 +113,24 @@ export function initTrackpad(elements, api) {
         })();
     }
 
-    function clearLongPress() {
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
+    function startScrollBarEdgeLoop() {
+        if (scrollBarEdgeLoopStarted) {
+            return;
         }
+
+        scrollBarEdgeLoopStarted = true;
+
+        (async () => {
+            while (true) {
+                if (scrollBarPointerId !== null && scrollBarEdgeVelocity !== 0) {
+                    const sensitivity = Number(sensitivitySlider.value);
+                    pendingScroll.y += scrollBarEdgeVelocity * sensitivity;
+                    await new Promise((resolve) => setTimeout(resolve, 16));
+                } else {
+                    await new Promise((resolve) => setTimeout(resolve, 40));
+                }
+            }
+        })();
     }
 
     function cancelPendingTap() {
@@ -159,6 +179,22 @@ export function initTrackpad(elements, api) {
         sendMouseButton("up", "left");
     }
 
+    function updateScrollBarEdgeVelocity(clientY) {
+        const rect = trackpadScrollBar.getBoundingClientRect();
+        const edgeSize = rect.height * SCROLL_BAR_EDGE_RATIO;
+        const offsetY = clientY - rect.top;
+
+        if (offsetY < edgeSize) {
+            const pressure = (edgeSize - offsetY) / edgeSize;
+            scrollBarEdgeVelocity = -SCROLL_BAR_EDGE_MAX_SPEED * pressure;
+        } else if (offsetY > rect.height - edgeSize) {
+            const pressure = (offsetY - (rect.height - edgeSize)) / edgeSize;
+            scrollBarEdgeVelocity = SCROLL_BAR_EDGE_MAX_SPEED * pressure;
+        } else {
+            scrollBarEdgeVelocity = 0;
+        }
+    }
+
     trackpadPad.addEventListener("pointerdown", (event) => {
         event.preventDefault();
 
@@ -184,30 +220,15 @@ export function initTrackpad(elements, api) {
 
         if (count === 1) {
             scrolledSincePress = false;
-            longPressed = false;
             tapMoved = false;
+            tapStartedAt = performance.now();
 
             if (doubleTapArmed) {
                 cancelPendingTap();
                 secondTapActive = true;
-            } else {
-                longPressTimer = setTimeout(() => {
-                    if (
-                        pointerMap.size === 1 &&
-                        !longPressed &&
-                        !tapMoved &&
-                        !secondTapActive &&
-                        !dragActive
-                    ) {
-                        longPressed = true;
-                        sendMouseClick("right", "Right");
-                        statusText.textContent = "Right-click";
-                    }
-                }, LONG_PRESS_MS);
             }
         } else {
             scrolledSincePress = true;
-            clearLongPress();
             cancelPendingTap();
             secondTapActive = false;
 
@@ -268,7 +289,6 @@ export function initTrackpad(elements, api) {
             } else {
                 if (!dragActive && Math.abs(dx) + Math.abs(dy) > TAP_MOVE_THRESHOLD) {
                     tapMoved = true;
-                    clearLongPress();
                 }
 
                 if (!secondTapActive) {
@@ -293,7 +313,6 @@ export function initTrackpad(elements, api) {
         }
 
         if (pointerMap.size === 0) {
-            clearLongPress();
             trackpadPad.classList.remove("active");
 
             if (dragActive) {
@@ -305,7 +324,12 @@ export function initTrackpad(elements, api) {
                     sendMouseClick("left", "Left", 2);
                     statusText.textContent = "Double-click";
                 }
-            } else if (!cancelled && !longPressed && !tapMoved && !scrolledSincePress) {
+            } else if (
+                !cancelled &&
+                !tapMoved &&
+                !scrolledSincePress &&
+                performance.now() - tapStartedAt >= MIN_TAP_MS
+            ) {
                 queueSingleTap();
             }
         }
@@ -328,6 +352,67 @@ export function initTrackpad(elements, api) {
 
     trackpadPad.addEventListener("touchstart", (event) => event.preventDefault(), { passive: false });
     trackpadPad.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+
+    if (trackpadScrollBar) {
+        trackpadScrollBar.addEventListener("pointerdown", (event) => {
+            event.preventDefault();
+
+            if (scrollBarPointerId !== null) {
+                return;
+            }
+
+            try {
+                trackpadScrollBar.setPointerCapture(event.pointerId);
+            } catch (error) {
+                // Some browsers reject pointer capture for touch; keep going.
+            }
+
+            startScrollLoop();
+            startScrollBarEdgeLoop();
+
+            scrollBarPointerId = event.pointerId;
+            scrollBarPreviousY = event.clientY;
+            updateScrollBarEdgeVelocity(event.clientY);
+            trackpadScrollBar.classList.add("active");
+            statusText.textContent = "Scrolling";
+        });
+
+        trackpadScrollBar.addEventListener("pointermove", (event) => {
+            event.preventDefault();
+
+            if (event.pointerId !== scrollBarPointerId) {
+                return;
+            }
+
+            const dy = event.clientY - scrollBarPreviousY;
+            const sensitivity = Number(sensitivitySlider.value);
+            pendingScroll.y += dy * SCROLL_BAR_STEP_FACTOR * sensitivity;
+            scrollBarPreviousY = event.clientY;
+            updateScrollBarEdgeVelocity(event.clientY);
+        });
+
+        function endScrollBar(event) {
+            if (event.pointerId !== scrollBarPointerId) {
+                return;
+            }
+
+            scrollBarPointerId = null;
+            scrollBarEdgeVelocity = 0;
+            trackpadScrollBar.classList.remove("active");
+        }
+
+        trackpadScrollBar.addEventListener("pointerup", (event) => {
+            event.preventDefault();
+            endScrollBar(event);
+        });
+
+        trackpadScrollBar.addEventListener("pointercancel", endScrollBar);
+        trackpadScrollBar.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+        });
+        trackpadScrollBar.addEventListener("touchstart", (event) => event.preventDefault(), { passive: false });
+        trackpadScrollBar.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+    }
 
     document.querySelectorAll("[data-click]").forEach((button) => {
         button.addEventListener("click", () => {
