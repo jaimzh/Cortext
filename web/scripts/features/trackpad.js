@@ -6,6 +6,9 @@ const SCROLL_STEP_FACTOR = 0.3;
 const SCROLL_BAR_STEP_FACTOR = 1.35;
 const SCROLL_BAR_EDGE_RATIO = 0.22;
 const SCROLL_BAR_EDGE_MAX_SPEED = 7;
+const POINTER_ACCELERATION_START = 0.25;
+const POINTER_ACCELERATION_FACTOR = 1.4;
+const POINTER_ACCELERATION_MAX_BOOST = 2.6;
 
 export function initTrackpad(elements, api) {
     const {
@@ -25,6 +28,8 @@ export function initTrackpad(elements, api) {
     let scrolledSincePress = false;
     let doubleTapArmed = false;
     let secondTapActive = false;
+    let doubleClickArmed = false;
+    let doubleClickTapActive = false;
     let dragActive = false;
     let moveLoopStarted = false;
     let scrollLoopStarted = false;
@@ -140,21 +145,33 @@ export function initTrackpad(elements, api) {
         }
 
         doubleTapArmed = false;
+        doubleClickArmed = false;
     }
 
-    function reAnchorPointers() {
+    function reAnchorPointers(timestamp = performance.now()) {
         for (const pointer of pointerMap.values()) {
             pointer.px = pointer.x;
             pointer.py = pointer.y;
+            pointer.pt = timestamp;
         }
     }
 
-    function queueSingleTap() {
+    function armTapClick() {
         cancelPendingTap();
         doubleTapArmed = true;
 
         pendingTapTimer = setTimeout(() => {
             doubleTapArmed = false;
+            pendingTapTimer = null;
+        }, DOUBLE_TAP_MS);
+    }
+
+    function armDoubleClickOrSendClick() {
+        cancelPendingTap();
+        doubleClickArmed = true;
+
+        pendingTapTimer = setTimeout(() => {
+            doubleClickArmed = false;
             pendingTapTimer = null;
             sendMouseClick("left", "Left");
             statusText.textContent = "Left-click";
@@ -164,6 +181,7 @@ export function initTrackpad(elements, api) {
     function startDrag() {
         dragActive = true;
         secondTapActive = false;
+        doubleClickTapActive = false;
         trackpadPad.classList.add("dragging");
         sendMouseButton("down", "left");
         statusText.textContent = "Dragging";
@@ -195,6 +213,16 @@ export function initTrackpad(elements, api) {
         }
     }
 
+    function getPointerAcceleration(dx, dy, elapsedMs) {
+        const distance = Math.hypot(dx, dy);
+        const speed = distance / Math.max(elapsedMs, 8);
+        const boostedSpeed = Math.max(speed - POINTER_ACCELERATION_START, 0);
+        return 1 + Math.min(
+            boostedSpeed * POINTER_ACCELERATION_FACTOR,
+            POINTER_ACCELERATION_MAX_BOOST,
+        );
+    }
+
     trackpadPad.addEventListener("pointerdown", (event) => {
         event.preventDefault();
 
@@ -209,6 +237,7 @@ export function initTrackpad(elements, api) {
             y: event.clientY,
             px: event.clientX,
             py: event.clientY,
+            pt: event.timeStamp,
         });
 
         startMoveLoop();
@@ -223,7 +252,10 @@ export function initTrackpad(elements, api) {
             tapMoved = false;
             tapStartedAt = performance.now();
 
-            if (doubleTapArmed) {
+            if (doubleClickArmed) {
+                cancelPendingTap();
+                doubleClickTapActive = true;
+            } else if (doubleTapArmed) {
                 cancelPendingTap();
                 secondTapActive = true;
             }
@@ -231,6 +263,7 @@ export function initTrackpad(elements, api) {
             scrolledSincePress = true;
             cancelPendingTap();
             secondTapActive = false;
+            doubleClickTapActive = false;
 
             if (dragActive) {
                 endDrag();
@@ -250,24 +283,26 @@ export function initTrackpad(elements, api) {
         const y = event.clientY;
         const dx = x - pointer.px;
         const dy = y - pointer.py;
+        const elapsedMs = event.timeStamp - pointer.pt;
         const wasScroll = previousPointerCount === 2;
         const isScroll = pointerMap.size === 2;
 
         pointer.px = x;
         pointer.py = y;
+        pointer.pt = event.timeStamp;
         pointer.x = x;
         pointer.y = y;
 
         if (wasScroll && !isScroll) {
-            reAnchorPointers();
+            reAnchorPointers(event.timeStamp);
             previousPointerCount = pointerMap.size;
             return;
         }
 
         if (isScroll) {
-            clearLongPress();
             cancelPendingTap();
             secondTapActive = false;
+            doubleClickTapActive = false;
             scrolledSincePress = true;
 
             if (dragActive) {
@@ -286,6 +321,10 @@ export function initTrackpad(elements, api) {
                 if (Math.abs(dx) + Math.abs(dy) > DRAG_MOVE_THRESHOLD) {
                     startDrag();
                 }
+            } else if (doubleClickTapActive) {
+                if (Math.abs(dx) + Math.abs(dy) > TAP_MOVE_THRESHOLD) {
+                    tapMoved = true;
+                }
             } else {
                 if (!dragActive && Math.abs(dx) + Math.abs(dy) > TAP_MOVE_THRESHOLD) {
                     tapMoved = true;
@@ -293,8 +332,9 @@ export function initTrackpad(elements, api) {
 
                 if (!secondTapActive) {
                     const sensitivity = Number(sensitivitySlider.value);
-                    pendingDelta.x += dx * sensitivity;
-                    pendingDelta.y += dy * sensitivity;
+                    const acceleration = getPointerAcceleration(dx, dy, elapsedMs);
+                    pendingDelta.x += dx * sensitivity * acceleration;
+                    pendingDelta.y += dy * sensitivity * acceleration;
                 }
             }
 
@@ -307,7 +347,7 @@ export function initTrackpad(elements, api) {
         pointerMap.delete(event.pointerId);
 
         if (wasScroll && pointerMap.size === 1) {
-            reAnchorPointers();
+            reAnchorPointers(event.timeStamp);
             previousPointerCount = pointerMap.size;
             return;
         }
@@ -317,12 +357,26 @@ export function initTrackpad(elements, api) {
 
             if (dragActive) {
                 endDrag();
+            } else if (doubleClickTapActive) {
+                doubleClickTapActive = false;
+
+                if (
+                    !cancelled &&
+                    !tapMoved &&
+                    performance.now() - tapStartedAt >= MIN_TAP_MS
+                ) {
+                    sendMouseClick("left", "Left", 2);
+                    statusText.textContent = "Double-click";
+                }
             } else if (secondTapActive) {
                 secondTapActive = false;
 
-                if (!cancelled) {
-                    sendMouseClick("left", "Left", 2);
-                    statusText.textContent = "Double-click";
+                if (
+                    !cancelled &&
+                    !tapMoved &&
+                    performance.now() - tapStartedAt >= MIN_TAP_MS
+                ) {
+                    armDoubleClickOrSendClick();
                 }
             } else if (
                 !cancelled &&
@@ -330,7 +384,7 @@ export function initTrackpad(elements, api) {
                 !scrolledSincePress &&
                 performance.now() - tapStartedAt >= MIN_TAP_MS
             ) {
-                queueSingleTap();
+                armTapClick();
             }
         }
 
