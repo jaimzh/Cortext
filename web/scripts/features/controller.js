@@ -1,5 +1,6 @@
 export function initController(elements, api) {
     const {
+        controllerPanel,
         controllerButtons,
         controllerSticks,
         statusText,
@@ -228,4 +229,11 @@ export function initController(elements, api) {
     });
 
     sendGamepadEvent({ type: "gamepad.connect" });
+
+    controllerPanel.addEventListener("touchstart", (event) => event.preventDefault(), { passive: false });
+    controllerPanel.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+
+    ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+        controllerPanel.addEventListener(eventName, (event) => event.preventDefault());
+    });
 }

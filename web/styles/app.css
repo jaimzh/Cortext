@@ -30,6 +30,12 @@
             font-family: Consolas, "Courier New", monospace;
         }
 
+        body.controller-mode {
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: none;
+        }
+
         main {
             width: min(100%, 960px);
             padding: 0;
@@ -456,6 +462,8 @@
 
         .controller-panel {
             min-height: 360px;
+            overscroll-behavior: none;
+            touch-action: none;
         }
 
         .controller-shell {

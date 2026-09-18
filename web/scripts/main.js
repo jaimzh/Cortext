@@ -1,9 +1,9 @@
-import { createApi } from "./api.js?v=xbox-controller-1";
-import { initController } from "./features/controller.js?v=xbox-controller-1";
-import { initKeyboard } from "./features/keyboard.js?v=xbox-controller-1";
-import { initTrackpad } from "./features/trackpad.js?v=xbox-controller-1";
-import { initVoice } from "./features/voice.js?v=xbox-controller-1";
-import { initModes } from "./ui/modes.js?v=xbox-controller-1";
+import { createApi } from "./api.js?v=controller-touch-lock-1";
+import { initController } from "./features/controller.js?v=controller-touch-lock-1";
+import { initKeyboard } from "./features/keyboard.js?v=controller-touch-lock-1";
+import { initTrackpad } from "./features/trackpad.js?v=controller-touch-lock-1";
+import { initVoice } from "./features/voice.js?v=controller-touch-lock-1";
+import { initModes } from "./ui/modes.js?v=controller-touch-lock-1";
 
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token") || "";

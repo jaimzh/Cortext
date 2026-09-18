@@ -22,6 +22,7 @@ export function initModes(elements) {
         voicePanel.hidden = !voiceActive;
         trackpadPanel.hidden = !trackpadActive;
         controllerPanel.hidden = !controllerActive;
+        document.body.classList.toggle("controller-mode", controllerActive);
         keyboardModeButton.classList.toggle("active", keyboardActive);
         voiceModeButton.classList.toggle("active", voiceActive);
         trackpadModeButton.classList.toggle("active", trackpadActive);
