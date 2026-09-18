@@ -17,6 +17,21 @@ ALLOWED_KEYS = {
     "right": "right",
 }
 
+ALLOWED_HELD_KEYS = {
+    **ALLOWED_KEYS,
+    "w": "w",
+    "a": "a",
+    "s": "s",
+    "d": "d",
+    "q": "q",
+    "e": "e",
+    "r": "r",
+    "f": "f",
+    "space": "space",
+    "shift": "shift",
+    "ctrl": "ctrl",
+}
+
 ALLOWED_SHORTCUTS = {
     "ctrl_a": ("ctrl", "a"),
     "ctrl_c": ("ctrl", "c"),
@@ -47,6 +62,24 @@ def press_key(key: str):
         raise ValueError(f"Unsupported key: {key}")
 
     pyautogui.press(normalized_key)
+
+
+def key_down(key: str):
+    normalized_key = ALLOWED_HELD_KEYS.get(key)
+
+    if normalized_key is None:
+        raise ValueError(f"Unsupported key: {key}")
+
+    pyautogui.keyDown(normalized_key)
+
+
+def key_up(key: str):
+    normalized_key = ALLOWED_HELD_KEYS.get(key)
+
+    if normalized_key is None:
+        raise ValueError(f"Unsupported key: {key}")
+
+    pyautogui.keyUp(normalized_key)
 
 
 def press_shortcut(shortcut: str):

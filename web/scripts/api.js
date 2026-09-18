@@ -7,6 +7,8 @@ const MOUSE_MOVE_URL = `${window.location.origin}/mouse/move`;
 const MOUSE_CLICK_URL = `${window.location.origin}/mouse/click`;
 const MOUSE_BUTTON_URL = `${window.location.origin}/mouse/button`;
 const MOUSE_SCROLL_URL = `${window.location.origin}/mouse/scroll`;
+const CONTROLLER_WS_URL = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/controller/ws`;
+const SOCKET_RECONNECT_MS = 800;
 
 function createTokenForm(token) {
     const formData = new FormData();
@@ -15,7 +17,83 @@ function createTokenForm(token) {
 }
 
 export function createApi(token) {
+    let controllerSocket = null;
+    let reconnectTimer = null;
+    const controllerMessageListeners = new Set();
+    const controllerOpenListeners = new Set();
+
+    function connectControllerSocket() {
+        if (!token || controllerSocket?.readyState === WebSocket.OPEN || controllerSocket?.readyState === WebSocket.CONNECTING) {
+            return;
+        }
+
+        controllerSocket = new WebSocket(`${CONTROLLER_WS_URL}?token=${encodeURIComponent(token)}`);
+
+        controllerSocket.addEventListener("open", () => {
+            controllerOpenListeners.forEach((listener) => listener());
+        });
+
+        controllerSocket.addEventListener("close", () => {
+            controllerSocket = null;
+
+            if (!reconnectTimer) {
+                reconnectTimer = setTimeout(() => {
+                    reconnectTimer = null;
+                    connectControllerSocket();
+                }, SOCKET_RECONNECT_MS);
+            }
+        });
+
+        controllerSocket.addEventListener("error", () => {
+            controllerSocket?.close();
+        });
+
+        controllerSocket.addEventListener("message", (event) => {
+            let data = null;
+
+            try {
+                data = JSON.parse(event.data);
+            } catch (error) {
+                return;
+            }
+
+            controllerMessageListeners.forEach((listener) => listener(data));
+        });
+    }
+
+    function sendControllerEventOverSocket(event) {
+        connectControllerSocket();
+
+        if (controllerSocket?.readyState !== WebSocket.OPEN) {
+            return false;
+        }
+
+        try {
+            controllerSocket.send(JSON.stringify(event));
+            return true;
+        } catch (error) {
+            controllerSocket?.close();
+            return false;
+        }
+    }
+
+    connectControllerSocket();
+
     return {
+        sendControllerEvent(event) {
+            return sendControllerEventOverSocket(event);
+        },
+
+        onControllerMessage(listener) {
+            controllerMessageListeners.add(listener);
+            return () => controllerMessageListeners.delete(listener);
+        },
+
+        onControllerOpen(listener) {
+            controllerOpenListeners.add(listener);
+            return () => controllerOpenListeners.delete(listener);
+        },
+
         async loadModels() {
             if (!token) {
                 return null;
@@ -66,6 +144,10 @@ export function createApi(token) {
         },
 
         async sendKeyboardKey(key) {
+            if (sendControllerEventOverSocket({ type: "keyboard.key", key })) {
+                return { message: "Key pressed", key };
+            }
+
             const formData = createTokenForm(token);
             formData.append("key", key);
 
@@ -82,6 +164,10 @@ export function createApi(token) {
         },
 
         async sendKeyboardShortcut(shortcut) {
+            if (sendControllerEventOverSocket({ type: "keyboard.shortcut", shortcut })) {
+                return { message: "Shortcut pressed", shortcut };
+            }
+
             const formData = createTokenForm(token);
             formData.append("shortcut", shortcut);
 
@@ -98,6 +184,10 @@ export function createApi(token) {
         },
 
         async sendMouseMove(dx, dy) {
+            if (sendControllerEventOverSocket({ type: "mouse.move", dx, dy })) {
+                return;
+            }
+
             const formData = createTokenForm(token);
             formData.append("dx", dx);
             formData.append("dy", dy);
@@ -106,6 +196,10 @@ export function createApi(token) {
         },
 
         async sendMouseScroll(dx, dy) {
+            if (sendControllerEventOverSocket({ type: "mouse.scroll", dx, dy })) {
+                return;
+            }
+
             const formData = createTokenForm(token);
             formData.append("dx", dx);
             formData.append("dy", dy);
@@ -114,6 +208,14 @@ export function createApi(token) {
         },
 
         async sendMouseClick(button, clicks = 1) {
+            if (sendControllerEventOverSocket({ type: "mouse.click", button, clicks })) {
+                return {
+                    message: "Clicked",
+                    button,
+                    clicks,
+                };
+            }
+
             const formData = createTokenForm(token);
             formData.append("button", button);
             formData.append("clicks", clicks);
@@ -128,6 +230,10 @@ export function createApi(token) {
         },
 
         async sendMouseButton(action, button) {
+            if (sendControllerEventOverSocket({ type: "mouse.button", action, button })) {
+                return;
+            }
+
             const formData = createTokenForm(token);
             formData.append("action", action);
             formData.append("button", button);

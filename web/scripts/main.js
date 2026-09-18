@@ -1,8 +1,9 @@
-import { createApi } from "./api.js";
-import { initKeyboard } from "./features/keyboard.js";
-import { initTrackpad } from "./features/trackpad.js";
-import { initVoice } from "./features/voice.js";
-import { initModes } from "./ui/modes.js";
+import { createApi } from "./api.js?v=xbox-controller-1";
+import { initController } from "./features/controller.js?v=xbox-controller-1";
+import { initKeyboard } from "./features/keyboard.js?v=xbox-controller-1";
+import { initTrackpad } from "./features/trackpad.js?v=xbox-controller-1";
+import { initVoice } from "./features/voice.js?v=xbox-controller-1";
+import { initModes } from "./ui/modes.js?v=xbox-controller-1";
 
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token") || "";
@@ -12,9 +13,11 @@ const elements = {
     keyboardModeButton: document.getElementById("keyboardModeButton"),
     voiceModeButton: document.getElementById("voiceModeButton"),
     trackpadModeButton: document.getElementById("trackpadModeButton"),
+    controllerModeButton: document.getElementById("controllerModeButton"),
     keyboardPanel: document.getElementById("keyboardPanel"),
     voicePanel: document.getElementById("voicePanel"),
     trackpadPanel: document.getElementById("trackpadPanel"),
+    controllerPanel: document.getElementById("controllerPanel"),
     trackpadPad: document.getElementById("trackpadPad"),
     trackpadScrollBar: document.getElementById("trackpadScrollBar"),
     sensitivitySlider: document.getElementById("sensitivitySlider"),
@@ -28,6 +31,8 @@ const elements = {
     advancedShortcuts: document.getElementById("advancedShortcuts"),
     shortcutButtons: document.querySelectorAll("[data-key]"),
     advancedShortcutButtons: document.querySelectorAll("[data-shortcut]"),
+    controllerButtons: document.querySelectorAll("[data-gamepad-button], [data-gamepad-trigger]"),
+    controllerSticks: document.querySelectorAll("[data-gamepad-stick]"),
     recordButton: document.getElementById("recordButton"),
     recordLabel: document.getElementById("recordLabel"),
     pasteToggle: document.getElementById("pasteToggle"),
@@ -40,3 +45,4 @@ initModes(elements);
 initKeyboard(elements, api);
 initVoice(elements, api);
 initTrackpad(elements, api);
+initController(elements, api);

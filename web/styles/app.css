@@ -31,7 +31,7 @@
         }
 
         main {
-            width: min(100%, 740px);
+            width: min(100%, 960px);
             padding: 0;
             background: transparent;
         }
@@ -60,7 +60,7 @@
         }
 
         .controls {
-            width: min(100%, 560px);
+            width: min(100%, 760px);
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -70,7 +70,7 @@
 
         .mode-switch {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
             margin: 32px 0 4px;
         }
@@ -454,6 +454,149 @@
             accent-color: var(--accent);
         }
 
+        .controller-panel {
+            min-height: 360px;
+        }
+
+        .controller-shell {
+            display: grid;
+            grid-template-columns: minmax(210px, 1fr) minmax(108px, 0.42fr) minmax(240px, 1.1fr);
+            gap: 18px;
+            align-items: center;
+            min-height: 330px;
+            margin-top: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+        }
+
+        .controller-cluster,
+        .controller-center {
+            display: grid;
+            gap: 10px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .movement-cluster {
+            grid-template-columns: repeat(2, minmax(78px, 110px));
+            grid-template-rows: 58px minmax(150px, 190px);
+            justify-content: center;
+        }
+
+        .action-cluster {
+            grid-template-columns: repeat(4, minmax(54px, 78px));
+            grid-template-rows: 58px repeat(3, minmax(54px, 78px));
+            justify-content: center;
+        }
+
+        .controller-center {
+            grid-template-columns: 1fr;
+        }
+
+        .controller-button {
+            width: 100%;
+            height: 100%;
+            min-height: 54px;
+            margin: 0;
+            border-top-width: 3px;
+            border-bottom-width: 3px;
+            border-top-color: #30343b;
+            border-bottom-color: #090a0c;
+            background: var(--surface-deep);
+            color: var(--text);
+            font-size: 14px;
+            touch-action: none;
+        }
+
+        .controller-button:hover {
+            background: #15171c;
+        }
+
+        .controller-button.pressed {
+            background: var(--accent);
+            border-top-color: var(--button-rim);
+            border-bottom-color: #005e9f;
+            color: var(--heading);
+            transform: translateY(2px);
+        }
+
+        .controller-button .button-label {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        .stick-pad {
+            position: relative;
+            grid-column: 1 / -1;
+            width: min(44vw, 180px);
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: radial-gradient(circle, #15171c 0 34%, var(--surface-deep) 35% 100%);
+            box-shadow: inset 0 0 24px color-mix(in srgb, #000 46%, transparent);
+            touch-action: none;
+        }
+
+        .stick-pad.pressed {
+            border-color: var(--accent);
+            box-shadow: inset 0 0 24px color-mix(in srgb, var(--accent) 24%, transparent);
+        }
+
+        .stick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 44%;
+            aspect-ratio: 1;
+            border: 1px solid #3b4048;
+            border-radius: 999px;
+            background: #20232a;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .shoulder-button,
+        .system-button,
+        .action-button {
+            border-radius: 8px;
+        }
+
+        .y-button {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .x-button {
+            grid-column: 1;
+            grid-row: 3;
+        }
+
+        .b-button {
+            grid-column: 3;
+            grid-row: 3;
+        }
+
+        .a-button {
+            grid-column: 2;
+            grid-row: 4;
+        }
+
+        .system-button {
+            height: 52px;
+            border-radius: 8px;
+            color: var(--muted);
+        }
+
+        .rotate-note {
+            display: none;
+            margin-top: 12px;
+            text-align: center;
+            font-size: 12px;
+        }
+
         .advanced-shortcuts[hidden] {
             display: none;
         }
@@ -512,5 +655,47 @@
             .trackpad-wrap {
                 grid-template-columns: minmax(0, 1fr) 36px;
                 gap: 8px;
+            }
+        }
+
+        @media (orientation: portrait) and (max-width: 720px) {
+            .controller-shell {
+                min-height: 240px;
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .rotate-note {
+                display: block;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 520px) {
+            body {
+                padding: 8px;
+                place-items: start center;
+            }
+
+            .brand,
+            .tagline,
+            #result {
+                display: none;
+            }
+
+            .mode-switch {
+                margin-top: 0;
+            }
+
+            .panel {
+                min-height: 0;
+            }
+
+            .controller-shell {
+                min-height: calc(100vh - 112px);
+                margin-top: 8px;
+            }
+
+            #status {
+                margin-bottom: 0;
             }
         }
