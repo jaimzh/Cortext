@@ -4,6 +4,7 @@ import Keyboard from '../features/keyboard/Keyboard.jsx';
 import Voice from '../features/voice/Voice.jsx';
 import Controller from '../features/controller/Controller.jsx';
 import ControllerFullscreenButton from '../features/controller/ControllerFullscreenButton.jsx';
+import { CheckIcon, PencilSimpleIcon } from '@phosphor-icons/react';
 import InputRibbon from './InputRibbon.jsx';
 import ResizableWorkspace from './ResizableWorkspace.jsx';
 import AppNavbar from './AppNavbar.jsx';
@@ -16,6 +17,7 @@ export default function MainLayout({ api, showNavbar = false }) {
     const previousView = useRef('workspace');
     const logoRef = useRef(null);
     const fullscreenButtonRef = useRef(null);
+    const [editingController, setEditingController] = useState(false);
     const [feedback, setFeedback] = useState({ message: 'Ready', result: '' });
     const report = useCallback((message, result = '') => setFeedback({ message, result }), []);
 
@@ -25,6 +27,7 @@ export default function MainLayout({ api, showNavbar = false }) {
     }, [view]);
 
     function selectView(next) {
+        setEditingController(false);
         setView(next);
         report('Ready');
     }
@@ -50,7 +53,15 @@ export default function MainLayout({ api, showNavbar = false }) {
                         </button>
                     ))}
                 </nav>
-                {view === 'controller' && <ControllerFullscreenButton buttonRef={fullscreenButtonRef} />}
+                {view === 'controller' && <div className="controller-toolbar-actions">
+                    <button type="button" className="controller-edit-button" aria-pressed={editingController}
+                        aria-label={editingController ? 'Save layout' : 'Edit layout'}
+                        title={editingController ? 'Save layout' : 'Edit layout'}
+                        onClick={() => setEditingController(value => !value)}>
+                        {editingController ? <CheckIcon size={18} aria-hidden="true" /> : <PencilSimpleIcon size={18} aria-hidden="true" />}
+                    </button>
+                    <ControllerFullscreenButton buttonRef={fullscreenButtonRef} />
+                </div>}
                 </div>
                 {/* Keep the text draft and sensitivity when switching views. */}
                 <ResizableWorkspace active={view === 'workspace'}
@@ -65,7 +76,8 @@ export default function MainLayout({ api, showNavbar = false }) {
                         </div>
                     </div>
                 </ResizableWorkspace>
-                {view === 'controller' && <Controller api={api} report={report} fullscreenButtonRef={fullscreenButtonRef} />}
+                {view === 'controller' && <Controller api={api} report={report} fullscreenButtonRef={fullscreenButtonRef}
+                    editing={editingController} onFinishEditing={() => setEditingController(false)} />}
                 {view !== 'about' && /failed|error|wrong|could not|type something/i.test(feedback.message) && (
                     <p className="input-error" role="alert">{feedback.message}{feedback.result ? ` ${feedback.result}` : ''}</p>
                 )}

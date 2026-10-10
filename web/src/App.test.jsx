@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import MainLayout from './layouts/MainLayout.jsx';
 import Voice from './features/voice/Voice.jsx';
 import { createApi } from './services/api.js';
+import { HUD_IDS, HUD_STORAGE_KEY } from './features/controller/hudLayout.js';
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
@@ -25,6 +26,51 @@ function mockApi() {
 }
 
 describe('React input workspace', () => {
+    it('edits rotated controls without sending gameplay input, saves sizes and restores the layout', () => {
+        const initial = Object.fromEntries(HUD_IDS.map(id => [id, { x: 0.5, y: 0.5, scale: 1 }]));
+        localStorage.setItem(HUD_STORAGE_KEY, JSON.stringify(initial));
+        const api = mockApi();
+        const view = render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        fireEvent.click(screen.getByRole('button', { name: 'Edit layout' }));
+        const shell = screen.getByRole('application', { name: 'Game controller' });
+        Object.defineProperties(shell, { offsetWidth: { value: 600 }, offsetHeight: { value: 300 } });
+        shell.style.setProperty('--controller-rotation', '90');
+        api.sendControllerEvent.mockClear();
+        const button = screen.getByRole('button', { name: 'A', exact: true });
+        fireEvent(button, new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 100 }));
+        fireEvent(shell, new MouseEvent('pointermove', { bubbles: true, clientX: 100, clientY: 160 }));
+        fireEvent(shell, new MouseEvent('pointerup', { bubbles: true }));
+        fireEvent.change(screen.getByRole('slider', { name: 'Control size' }), { target: { value: '125' } });
+        expect(api.sendControllerEvent).not.toHaveBeenCalled();
+        expect(api.sendKeyboardKey).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'Save layout' }));
+        const saved = JSON.parse(localStorage.getItem(HUD_STORAGE_KEY));
+        expect(saved.a.x).toBeCloseTo(0.6);
+        expect(saved.a.y).toBeCloseTo(0.5);
+        expect(saved.a.scale).toBe(1.25);
+        view.unmount();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        expect(screen.getByRole('button', { name: 'A', exact: true }).style.getPropertyValue('--hud-scale')).toBe('1.25');
+    });
+
+    it('cancels layout changes and resets to the default arrangement', () => {
+        const initial = Object.fromEntries(HUD_IDS.map(id => [id, { x: 0.5, y: 0.5, scale: 1 }]));
+        localStorage.setItem(HUD_STORAGE_KEY, JSON.stringify(initial));
+        render(<MainLayout api={mockApi()} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        fireEvent.click(screen.getByRole('button', { name: 'Edit layout' }));
+        fireEvent.change(screen.getByRole('slider', { name: 'Control size' }), { target: { value: '150' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+        expect(JSON.parse(localStorage.getItem(HUD_STORAGE_KEY))).toEqual(initial);
+        fireEvent.click(screen.getByRole('button', { name: 'Edit layout' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save layout' }));
+        expect(localStorage.getItem(HUD_STORAGE_KEY)).toBeNull();
+        expect(screen.getByRole('application', { name: 'Game controller' }).getAttribute('data-custom-layout')).toBe('false');
+    });
+
     it.each([0, 90])('maps joystick movement into controller coordinates at %s degrees', angle => {
         const api = mockApi();
         render(<MainLayout api={api} />);

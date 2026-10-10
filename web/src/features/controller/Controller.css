@@ -34,6 +34,7 @@
 
         .controller-shell {
             --controller-rotation: 0;
+            --controller-width: 100cqw;
             --controller-height: 100cqh;
             --control-size: clamp(28px, calc((var(--controller-height) - 64px) / 5), 64px);
             --stick-size: min(180px, calc(3 * var(--control-size) + 20px));
@@ -248,9 +249,82 @@
     .controller-viewport { height: calc(100dvh - 140px); }
     .controller-shell {
         --controller-rotation: 90;
+        --controller-width: 100cqh;
         --controller-height: 100cqw;
         width: 100cqh;
         height: 100cqw;
         transform: translate(-50%, -50%) rotate(90deg);
     }
+}
+
+.controller-toolbar-actions { display: flex; align-items: center; gap: 4px; }
+.controller-edit-button, .hud-editor-button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: auto; height: 36px; margin: 0; padding: 6px 10px;
+    border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 12px;
+}
+.controller-edit-button:hover, .hud-editor-button:hover { background: var(--surface); color: var(--heading); }
+.controller-edit-button[aria-pressed="true"] { color: var(--accent); }
+.controller-edit-button { width: 36px; padding: 0; }
+.hud-editor-toolbar {
+    display: flex; align-items: center; gap: 12px; height: 56px;
+    border-bottom: 1px solid var(--border);
+}
+.hud-editor-toolbar label { margin: 0; gap: 8px; font-size: 12px; }
+.hud-control-picker select { width: 90px; height: 34px; padding: 4px; appearance: auto; }
+.hud-size-picker { flex: 1; }
+.hud-size-picker input { width: min(100%, 140px); min-width: 40px; accent-color: var(--accent); }
+.hud-size-picker output { min-width: 4ch; }
+.controller-panel[data-editing="true"] .controller-viewport { height: clamp(180px, calc(100dvh - 196px), 464px); }
+.controller-panel[data-editing="true"] .controller-shell { --control-size: clamp(20px, calc((var(--controller-height) - 64px) / 5), 64px); }
+body.controller-fullscreen .controller-panel[data-editing="true"] .controller-viewport { height: calc(100% - 56px); }
+.controller-shell[data-custom-layout="true"] { display: block; }
+.controller-shell[data-custom-layout="true"] .controller-cluster,
+.controller-shell[data-custom-layout="true"] .controller-center { display: contents; }
+.controller-shell[data-custom-layout="true"] [data-hud-id] {
+    --hud-width: calc(var(--control-size) * var(--hud-scale));
+    --hud-height: calc(var(--control-size) * var(--hud-scale));
+    --hud-w: min(var(--hud-width), calc(var(--controller-width) - 24px));
+    --hud-h: min(var(--hud-height), calc(var(--controller-height) - 24px));
+    position: absolute; width: var(--hud-w); height: var(--hud-h);
+    left: clamp(calc(var(--hud-w) / 2 + 12px), var(--hud-x), calc(100% - var(--hud-w) / 2 - 12px));
+    top: clamp(calc(var(--hud-h) / 2 + 12px), var(--hud-y), calc(100% - var(--hud-h) / 2 - 12px));
+    transform: translate(-50%, -50%);
+}
+.controller-shell[data-custom-layout="true"] .shoulder-button {
+    --hud-width: calc(1.5 * var(--control-size) * var(--hud-scale));
+    --hud-height: calc(0.75 * var(--control-size) * var(--hud-scale));
+}
+.controller-shell[data-custom-layout="true"] .system-button {
+    --hud-width: calc(76px * var(--hud-scale));
+    --hud-height: calc(34px * var(--hud-scale));
+}
+.controller-shell[data-custom-layout="true"] .stick-pad {
+    --hud-width: min(calc(var(--stick-size) * var(--hud-scale)), calc(var(--controller-height) - 24px), calc(var(--controller-width) - 24px));
+    --hud-height: var(--hud-width);
+}
+.controller-panel[data-editing="true"] [data-hud-id] { cursor: grab; outline: 1px dashed var(--subtle); outline-offset: 2px; }
+.controller-panel[data-editing="true"] [data-selected="true"] { outline: 2px solid var(--accent); z-index: 2; }
+.controller-panel[data-editing="true"] [data-hud-id]:active { cursor: grabbing; }
+@media (max-width: 540px) {
+    .controller-edit-button { width: 30px; padding: 0; }
+    body.controller-mode .mode-button { font-size: 10px; padding-inline: 4px; }
+    .controller-fullscreen-button { width: 32px; }
+    .workspace-toolbar { gap: 4px; }
+    .hud-editor-toolbar { gap: 4px; }
+    .hud-editor-toolbar label { gap: 4px; }
+    .hud-control-picker { font-size: 0 !important; }
+    .hud-control-picker select { width: 72px; font-size: 12px; }
+    .hud-editor-button { padding-inline: 6px; }
+    .hud-size-picker input { width: 50px; }
+}
+@media (max-width: 380px) {
+    .hud-control-picker select { width: 60px; }
+    .hud-size-picker { font-size: 0 !important; }
+    .hud-size-picker output { font-size: 10px; }
+    .hud-size-picker input { width: 40px; }
+    .hud-editor-button { font-size: 11px; padding-inline: 4px; }
+}
+@media (orientation: portrait) and (max-width: 720px) {
+    .controller-panel[data-editing="true"] .controller-viewport { height: calc(100dvh - 196px); }
 }

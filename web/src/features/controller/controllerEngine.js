@@ -167,6 +167,8 @@ export function initController(elements, api) {
         controllerButtons.forEach((button) => button.classList.remove("pressed"));
     }
 
+    listen(controllerPanel, 'controller:edit', releaseAll);
+
     function updateStick(stick, x, y) {
         const knob = stick.querySelector(".stick-knob");
 
@@ -201,6 +203,7 @@ export function initController(elements, api) {
 
     controllerButtons.forEach((button) => {
         listen(button, "pointerdown", (event) => {
+            if (controllerPanel.dataset.editing === 'true') return;
             event.preventDefault();
 
             try {
@@ -228,6 +231,7 @@ export function initController(elements, api) {
 
     controllerSticks.forEach((stick) => {
         listen(stick, "pointerdown", (event) => {
+            if (controllerPanel.dataset.editing === 'true') return;
             event.preventDefault();
 
             try {
@@ -243,6 +247,7 @@ export function initController(elements, api) {
         });
 
         listen(stick, "pointermove", (event) => {
+            if (controllerPanel.dataset.editing === 'true') return;
             event.preventDefault();
 
             const control = activePointers.get(event.pointerId);
@@ -288,8 +293,11 @@ export function initController(elements, api) {
 
     sendGamepadEvent({ type: "gamepad.connect" });
 
-    listen(controllerPanel, "touchstart", (event) => event.preventDefault(), { passive: false });
-    listen(controllerPanel, "touchmove", (event) => event.preventDefault(), { passive: false });
+    function preventGameplayTouch(event) {
+        if (controllerPanel.dataset.editing !== 'true' && event.target.closest('.controller-shell')) event.preventDefault();
+    }
+    listen(controllerPanel, "touchstart", preventGameplayTouch, { passive: false });
+    listen(controllerPanel, "touchmove", preventGameplayTouch, { passive: false });
 
     ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
         listen(controllerPanel, eventName, (event) => event.preventDefault());
