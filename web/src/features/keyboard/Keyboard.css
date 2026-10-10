@@ -1,0 +1,110 @@
+.keyboard-input-wrap {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 160px;
+            padding: 16px 58px 16px 16px;
+            resize: vertical;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface-deep);
+            color: var(--heading);
+            font: inherit;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+            outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+        }
+
+        .quick-send-button {
+            position: absolute;
+            right: 10px;
+            bottom: 14px;
+            width: 38px;
+            height: 34px;
+            margin: 0;
+            border-top-width: 2px;
+            border-bottom-width: 2px;
+            border-top-color: #30343b;
+            border-bottom-color: #090a0c;
+            background: #15171c;
+            color: var(--text);
+            font-size: 18px;
+        }
+
+        .quick-send-button:hover {
+            background: var(--surface-deep);
+            border-top-color: var(--button-rim);
+            border-bottom-color: #006eb8;
+        }
+
+        .quick-send-button .button-label {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        .shortcut-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .shortcut-button {
+            width: 100%;
+            height: 42px;
+            margin: 0;
+            border-top-width: 2px;
+            border-bottom-width: 2px;
+            border-top-color: #30343b;
+            border-bottom-color: #090a0c;
+            background: var(--surface-deep);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .shortcut-button:hover {
+            background: #15171c;
+            border-top-color: var(--button-rim);
+            border-bottom-color: #006eb8;
+        }
+
+        .shortcut-button .button-label {
+            background: transparent;
+            color: inherit;
+        }
+
+        .desktop-shortcuts {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .more-keys-toggle {
+            width: 100%;
+            height: 38px;
+            margin: 8px 0 0;
+            border-top-width: 2px;
+            border-bottom-width: 2px;
+            border-top-color: #30343b;
+            border-bottom-color: #090a0c;
+            background: transparent;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .more-keys-toggle:hover {
+            background: #15171c;
+            border-top-color: #3b4048;
+            border-bottom-color: #0b0c0f;
+            color: var(--text);
+        }
+
+        .more-keys-toggle .button-label {
+            background: transparent;
+            color: inherit;
+        }

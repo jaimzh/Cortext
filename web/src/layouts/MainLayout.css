@@ -1,0 +1,14 @@
+.brand { font-size: clamp(24px, 6vw, 42px); letter-spacing: .12em; }
+.mode-switch { grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr)); }
+.mode-button { height: auto; min-height: 46px; padding: 8px 2px; }
+.mode-button .button-label { padding: 2px 4px; }
+.input-workspace { display: grid; gap: 24px; margin-bottom: 24px; }
+.input-workspace[hidden] { display: none; }
+.input-workspace .panel { min-height: 0; }
+.input-workspace .keyboard-input-wrap { margin-top: 0; }
+.input-workspace textarea { min-height: 100px; }
+.controls > .panel { min-height: 0; margin-bottom: 24px; }
+@media (max-width: 420px) {
+    main { padding: 0; }
+    .mode-button { font-size: 12px; }
+}

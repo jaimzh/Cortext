@@ -28,3 +28,7 @@ htmlcov/
 .DS_Store
 Thumbs.db
 MOUSE_TRACKPAD_GUIDE.md
+
+# Frontend dependencies and build output
+web/node_modules/
+web/dist/

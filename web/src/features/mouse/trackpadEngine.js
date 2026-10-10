@@ -11,6 +11,11 @@ const POINTER_ACCELERATION_FACTOR = 1.4;
 const POINTER_ACCELERATION_MAX_BOOST = 2.6;
 
 export function initTrackpad(elements, api) {
+    const events = new AbortController();
+    let disposed = false;
+    function listen(target, type, handler, options = {}) {
+        target.addEventListener(type, handler, { ...options, signal: events.signal });
+    }
     const {
         trackpadPad,
         trackpadScrollBar,
@@ -80,7 +85,7 @@ export function initTrackpad(elements, api) {
         moveLoopStarted = true;
 
         (async () => {
-            while (true) {
+            while (!disposed) {
                 const dx = Math.trunc(pendingDelta.x);
                 const dy = Math.trunc(pendingDelta.y);
 
@@ -103,7 +108,7 @@ export function initTrackpad(elements, api) {
         scrollLoopStarted = true;
 
         (async () => {
-            while (true) {
+            while (!disposed) {
                 const dx = Math.trunc(pendingScroll.x);
                 const dy = Math.trunc(pendingScroll.y);
 
@@ -126,7 +131,7 @@ export function initTrackpad(elements, api) {
         scrollBarEdgeLoopStarted = true;
 
         (async () => {
-            while (true) {
+            while (!disposed) {
                 if (scrollBarPointerId !== null && scrollBarEdgeVelocity !== 0) {
                     const sensitivity = Number(sensitivitySlider.value);
                     pendingScroll.y += scrollBarEdgeVelocity * sensitivity;
@@ -223,7 +228,7 @@ export function initTrackpad(elements, api) {
         );
     }
 
-    trackpadPad.addEventListener("pointerdown", (event) => {
+    listen(trackpadPad, "pointerdown", (event) => {
         event.preventDefault();
 
         try {
@@ -271,7 +276,7 @@ export function initTrackpad(elements, api) {
         }
     });
 
-    trackpadPad.addEventListener("pointermove", (event) => {
+    listen(trackpadPad, "pointermove", (event) => {
         event.preventDefault();
         const pointer = pointerMap.get(event.pointerId);
 
@@ -391,24 +396,24 @@ export function initTrackpad(elements, api) {
         previousPointerCount = pointerMap.size;
     }
 
-    trackpadPad.addEventListener("pointerup", (event) => {
+    listen(trackpadPad, "pointerup", (event) => {
         event.preventDefault();
         handlePointerEnd(event, false);
     });
 
-    trackpadPad.addEventListener("pointercancel", (event) => {
+    listen(trackpadPad, "pointercancel", (event) => {
         handlePointerEnd(event, true);
     });
 
-    trackpadPad.addEventListener("contextmenu", (event) => {
+    listen(trackpadPad, "contextmenu", (event) => {
         event.preventDefault();
     });
 
-    trackpadPad.addEventListener("touchstart", (event) => event.preventDefault(), { passive: false });
-    trackpadPad.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+    listen(trackpadPad, "touchstart", (event) => event.preventDefault(), { passive: false });
+    listen(trackpadPad, "touchmove", (event) => event.preventDefault(), { passive: false });
 
     if (trackpadScrollBar) {
-        trackpadScrollBar.addEventListener("pointerdown", (event) => {
+        listen(trackpadScrollBar, "pointerdown", (event) => {
             event.preventDefault();
 
             if (scrollBarPointerId !== null) {
@@ -431,7 +436,7 @@ export function initTrackpad(elements, api) {
             statusText.textContent = "Scrolling";
         });
 
-        trackpadScrollBar.addEventListener("pointermove", (event) => {
+        listen(trackpadScrollBar, "pointermove", (event) => {
             event.preventDefault();
 
             if (event.pointerId !== scrollBarPointerId) {
@@ -455,27 +460,37 @@ export function initTrackpad(elements, api) {
             trackpadScrollBar.classList.remove("active");
         }
 
-        trackpadScrollBar.addEventListener("pointerup", (event) => {
+        listen(trackpadScrollBar, "pointerup", (event) => {
             event.preventDefault();
             endScrollBar(event);
         });
 
-        trackpadScrollBar.addEventListener("pointercancel", endScrollBar);
-        trackpadScrollBar.addEventListener("contextmenu", (event) => {
+        listen(trackpadScrollBar, "pointercancel", endScrollBar);
+        listen(trackpadScrollBar, "contextmenu", (event) => {
             event.preventDefault();
         });
-        trackpadScrollBar.addEventListener("touchstart", (event) => event.preventDefault(), { passive: false });
-        trackpadScrollBar.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+        listen(trackpadScrollBar, "touchstart", (event) => event.preventDefault(), { passive: false });
+        listen(trackpadScrollBar, "touchmove", (event) => event.preventDefault(), { passive: false });
     }
 
-    document.querySelectorAll("[data-click]").forEach((button) => {
-        button.addEventListener("click", () => {
+    elements.mouseButtons.forEach((button) => {
+        listen(button, "click", () => {
             const label = button.querySelector(".button-label").textContent.trim();
             sendMouseClick(button.dataset.click, label);
         });
     });
 
-    sensitivitySlider.addEventListener("input", () => {
+    listen(sensitivitySlider, "input", () => {
         sensitivityValue.textContent = `${sensitivitySlider.value}x`;
     });
+
+    return () => {
+        disposed = true;
+        events.abort();
+        cancelPendingTap();
+        endDrag();
+        pointerMap.clear();
+        trackpadPad.classList.remove('active', 'dragging');
+        trackpadScrollBar.classList.remove('active');
+    };
 }

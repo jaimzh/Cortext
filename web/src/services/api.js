@@ -17,13 +17,14 @@ function createTokenForm(token) {
 }
 
 export function createApi(token) {
+    let disposed = false;
     let controllerSocket = null;
     let reconnectTimer = null;
     const controllerMessageListeners = new Set();
     const controllerOpenListeners = new Set();
 
     function connectControllerSocket() {
-        if (!token || controllerSocket?.readyState === WebSocket.OPEN || controllerSocket?.readyState === WebSocket.CONNECTING) {
+        if (disposed || !token || controllerSocket?.readyState === WebSocket.OPEN || controllerSocket?.readyState === WebSocket.CONNECTING) {
             return;
         }
 
@@ -36,7 +37,7 @@ export function createApi(token) {
         controllerSocket.addEventListener("close", () => {
             controllerSocket = null;
 
-            if (!reconnectTimer) {
+            if (!disposed && !reconnectTimer) {
                 reconnectTimer = setTimeout(() => {
                     reconnectTimer = null;
                     connectControllerSocket();
@@ -62,6 +63,7 @@ export function createApi(token) {
     }
 
     function sendControllerEventOverSocket(event) {
+        if (disposed) return false;
         connectControllerSocket();
 
         if (controllerSocket?.readyState !== WebSocket.OPEN) {
@@ -77,9 +79,14 @@ export function createApi(token) {
         }
     }
 
-    connectControllerSocket();
-
     return {
+        dispose() {
+            disposed = true;
+            clearTimeout(reconnectTimer);
+            controllerMessageListeners.clear();
+            controllerOpenListeners.clear();
+            controllerSocket?.close();
+        },
         sendControllerEvent(event) {
             return sendControllerEventOverSocket(event);
         },

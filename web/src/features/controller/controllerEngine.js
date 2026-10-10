@@ -1,4 +1,9 @@
 export function initController(elements, api) {
+    const events = new AbortController();
+    let disposed = false;
+    function listen(target, type, handler, options = {}) {
+        target.addEventListener(type, handler, { ...options, signal: events.signal });
+    }
     const {
         controllerPanel,
         controllerFullscreenButton,
@@ -12,6 +17,7 @@ export function initController(elements, api) {
     const activeControls = new Set();
 
     function setControllerFullscreen(active) {
+        if (disposed) return;
         document.body.classList.toggle("controller-fullscreen", active);
         controllerFullscreenButton.setAttribute("aria-pressed", String(active));
         controllerFullscreenLabel.textContent = active ? "Exit" : "Fullscreen";
@@ -43,15 +49,15 @@ export function initController(elements, api) {
         }
     }
 
-    document.addEventListener("fullscreenchange", () => {
+    listen(document, "fullscreenchange", () => {
         if (!document.fullscreenElement) {
             setControllerFullscreen(false);
         }
     });
 
-    controllerFullscreenButton.addEventListener("click", toggleControllerFullscreen);
+    listen(controllerFullscreenButton, "click", toggleControllerFullscreen);
 
-    api.onControllerMessage?.((message) => {
+    const removeMessage = api.onControllerMessage?.((message) => {
         if (message.type === "gamepad.status") {
             statusText.textContent = message.message || "Native Xbox controller ready";
         } else if (message.type === "error") {
@@ -59,7 +65,7 @@ export function initController(elements, api) {
         }
     });
 
-    api.onControllerOpen?.(() => {
+    const removeOpen = api.onControllerOpen?.(() => {
         sendGamepadEvent({ type: "gamepad.connect" });
     });
 
@@ -184,7 +190,7 @@ export function initController(elements, api) {
     }
 
     controllerButtons.forEach((button) => {
-        button.addEventListener("pointerdown", (event) => {
+        listen(button, "pointerdown", (event) => {
             event.preventDefault();
 
             try {
@@ -196,22 +202,22 @@ export function initController(elements, api) {
             pressControl(button, event.pointerId);
         });
 
-        button.addEventListener("pointerup", (event) => {
+        listen(button, "pointerup", (event) => {
             event.preventDefault();
             releaseControl(event.pointerId);
         });
 
-        button.addEventListener("pointercancel", (event) => {
+        listen(button, "pointercancel", (event) => {
             releaseControl(event.pointerId);
         });
 
-        button.addEventListener("contextmenu", (event) => {
+        listen(button, "contextmenu", (event) => {
             event.preventDefault();
         });
     });
 
     controllerSticks.forEach((stick) => {
-        stick.addEventListener("pointerdown", (event) => {
+        listen(stick, "pointerdown", (event) => {
             event.preventDefault();
 
             try {
@@ -226,7 +232,7 @@ export function initController(elements, api) {
             statusText.textContent = "Controller";
         });
 
-        stick.addEventListener("pointermove", (event) => {
+        listen(stick, "pointermove", (event) => {
             event.preventDefault();
 
             const control = activePointers.get(event.pointerId);
@@ -250,19 +256,19 @@ export function initController(elements, api) {
             updateStick(stick, 0, 0);
         }
 
-        stick.addEventListener("pointerup", (event) => {
+        listen(stick, "pointerup", (event) => {
             event.preventDefault();
             releaseStick(event);
         });
 
-        stick.addEventListener("pointercancel", releaseStick);
-        stick.addEventListener("contextmenu", (event) => {
+        listen(stick, "pointercancel", releaseStick);
+        listen(stick, "contextmenu", (event) => {
             event.preventDefault();
         });
     });
 
-    window.addEventListener("blur", releaseAll);
-    document.addEventListener("visibilitychange", () => {
+    listen(window, "blur", releaseAll);
+    listen(document, "visibilitychange", () => {
         if (document.hidden) {
             releaseAll();
         } else {
@@ -272,10 +278,20 @@ export function initController(elements, api) {
 
     sendGamepadEvent({ type: "gamepad.connect" });
 
-    controllerPanel.addEventListener("touchstart", (event) => event.preventDefault(), { passive: false });
-    controllerPanel.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+    listen(controllerPanel, "touchstart", (event) => event.preventDefault(), { passive: false });
+    listen(controllerPanel, "touchmove", (event) => event.preventDefault(), { passive: false });
 
     ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
-        controllerPanel.addEventListener(eventName, (event) => event.preventDefault());
+        listen(controllerPanel, eventName, (event) => event.preventDefault());
     });
+
+    return () => {
+        releaseAll();
+        events.abort();
+        removeMessage?.();
+        removeOpen?.();
+        setControllerFullscreen(false);
+        disposed = true;
+        if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    };
 }

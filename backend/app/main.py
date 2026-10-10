@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,8 +16,8 @@ from app.config.config import SESSION_TOKEN
 from app.services.session_state import mark_connected
 
 
-WEB_INDEX = Path(__file__).resolve().parents[2] / "web" / "index.html"
-WEB_ROOT = WEB_INDEX.parent
+WEB_ROOT = Path(__file__).resolve().parents[2] / "web" / "dist"
+WEB_INDEX = WEB_ROOT / "index.html"
 
 app = FastAPI(
     title="Cortext Backend",
@@ -44,8 +44,11 @@ app.include_router(controller_router)
 app.include_router(keyboard_router)
 app.include_router(mouse_router)
 
-app.mount("/styles", StaticFiles(directory=WEB_ROOT / "styles"), name="styles")
-app.mount("/scripts", StaticFiles(directory=WEB_ROOT / "scripts"), name="scripts")
+app.mount(
+    "/app/assets",
+    StaticFiles(directory=WEB_ROOT / "assets", check_dir=False),
+    name="web-assets",
+)
 
 @app.get("/")
 def root():
@@ -62,7 +65,13 @@ def health_check():
 
 
 @app.get("/app")
+@app.get("/app/")
 def web_app(token: str = ""):
+    if not WEB_INDEX.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail="Frontend build missing. Run npm install and npm run build in web/.",
+        )
     if token == SESSION_TOKEN:
         mark_connected()
 
