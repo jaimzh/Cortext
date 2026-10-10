@@ -7,7 +7,6 @@ export function initController(elements, api) {
     const {
         controllerPanel,
         controllerFullscreenButton,
-        controllerFullscreenLabel,
         controllerButtons,
         controllerSticks,
         statusText,
@@ -20,7 +19,9 @@ export function initController(elements, api) {
         if (disposed) return;
         document.body.classList.toggle("controller-fullscreen", active);
         controllerFullscreenButton.setAttribute("aria-pressed", String(active));
-        controllerFullscreenLabel.textContent = active ? "Exit" : "Fullscreen";
+        const label = active ? 'Exit fullscreen' : 'Enter fullscreen';
+        controllerFullscreenButton.setAttribute('aria-label', label);
+        controllerFullscreenButton.setAttribute('title', label);
     }
 
     async function toggleControllerFullscreen() {
@@ -186,8 +187,12 @@ export function initController(elements, api) {
         const radius = Math.min(rect.width, rect.height) / 2;
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        const rawX = (event.clientX - centerX) / radius;
-        const rawY = (centerY - event.clientY) / radius;
+        // Map screen coordinates back into the controller's rotated surface.
+        const angle = Number(getComputedStyle(stick).getPropertyValue('--controller-rotation')) * Math.PI / 180;
+        const dx = event.clientX - centerX;
+        const dy = event.clientY - centerY;
+        const rawX = (dx * Math.cos(angle) + dy * Math.sin(angle)) / radius;
+        const rawY = (dx * Math.sin(angle) - dy * Math.cos(angle)) / radius;
         const distance = Math.hypot(rawX, rawY);
         const scale = distance > 1 ? 1 / distance : 1;
 

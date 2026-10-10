@@ -2,14 +2,12 @@ import { useRef } from 'react';
 import { useController } from './useController.js';
 import './Controller.css';
 
-export default function Controller({ api, report }) {
+export default function Controller({ api, report, fullscreenButtonRef }) {
     const panelRef = useRef(null);
-    useController(panelRef, api, report);
+    useController(panelRef, api, report, fullscreenButtonRef);
     return (
         <section ref={panelRef} id="controllerPanel" className="panel controller-panel">
-                <button id="controllerFullscreenButton" className="controller-fullscreen-button" type="button">
-                    <span id="controllerFullscreenLabel" className="button-label">Fullscreen</span>
-                </button>
+            <div className="controller-viewport">
                 <div className="controller-shell" role="application" aria-label="Game controller">
                     <div className="controller-cluster movement-cluster" aria-label="Movement controls">
                         <button className="controller-button shoulder-button" type="button" data-gamepad-trigger="left">
@@ -33,11 +31,11 @@ export default function Controller({ api, report }) {
                     </div>
 
                     <div className="controller-cluster action-cluster" aria-label="Action controls">
-                        <button className="controller-button shoulder-button" type="button" data-gamepad-button="rb">
-                            <span className="button-label">RB</span>
-                        </button>
                         <button className="controller-button shoulder-button" type="button" data-gamepad-trigger="right">
                             <span className="button-label">RT</span>
+                        </button>
+                        <button className="controller-button shoulder-button" type="button" data-gamepad-button="rb">
+                            <span className="button-label">RB</span>
                         </button>
                         <button className="controller-button action-button y-button" type="button" data-gamepad-button="y">
                             <span className="button-label">Y</span>
@@ -53,7 +51,7 @@ export default function Controller({ api, report }) {
                         </button>
                     </div>
                 </div>
-                <p className="rotate-note">Rotate phone for controller layout.</p>
-            </section>
+            </div>
+        </section>
     );
 }

@@ -1,4 +1,5 @@
 :root {
+            scrollbar-gutter: stable both-edges;
             --background: #111111;
             --surface: #17191f;
             --surface-deep: #0d0e11;
@@ -23,7 +24,7 @@
             min-height: 100vh;
             margin: 0;
             display: grid;
-            place-items: center;
+            place-items: start center;
             padding: 24px;
             background: var(--background);
             color: var(--text);
@@ -31,10 +32,10 @@
         }
 
         body.controller-mode {
-            overflow: hidden;
             overscroll-behavior: none;
-            touch-action: none;
         }
+
+        :root:has(body.controller-fullscreen) { scrollbar-gutter: auto; }
 
         main {
             width: min(100%, 960px);
@@ -278,18 +279,6 @@
             }
         }
 
-        @media (orientation: portrait) and (max-width: 720px) {
-            .controller-shell {
-                min-height: 240px;
-                grid-template-columns: 1fr;
-                gap: 14px;
-            }
-
-            .rotate-note {
-                display: block;
-            }
-        }
-
         @media (orientation: landscape) and (max-height: 520px) {
             body {
                 padding: 8px;
@@ -308,11 +297,6 @@
 
             .panel {
                 min-height: 0;
-            }
-
-            .controller-shell {
-                min-height: calc(100vh - 112px);
-                margin-top: 8px;
             }
 
             #status {

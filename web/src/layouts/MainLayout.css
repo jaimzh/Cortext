@@ -18,9 +18,11 @@
 .about-back:hover { background: transparent; color: var(--heading); }
 body.controller-fullscreen .app-navbar { display: none; }
 .mode-switch[hidden] { display: none; }
+.workspace-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 46px; margin-bottom: 8px; }
+.workspace-toolbar[hidden] { display: none; }
 .mode-switch {
     display: flex; align-self: flex-start; width: fit-content; gap: 4px;
-    margin: 0 0 8px; padding: 4px; border: 1px solid var(--border);
+    margin: 0; padding: 4px; border: 1px solid var(--border);
     border-radius: 8px; background: var(--surface-deep);
 }
 .mode-button {

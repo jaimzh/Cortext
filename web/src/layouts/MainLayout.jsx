@@ -3,6 +3,7 @@ import Mouse from '../features/mouse/Mouse.jsx';
 import Keyboard from '../features/keyboard/Keyboard.jsx';
 import Voice from '../features/voice/Voice.jsx';
 import Controller from '../features/controller/Controller.jsx';
+import ControllerFullscreenButton from '../features/controller/ControllerFullscreenButton.jsx';
 import InputRibbon from './InputRibbon.jsx';
 import ResizableWorkspace from './ResizableWorkspace.jsx';
 import AppNavbar from './AppNavbar.jsx';
@@ -14,6 +15,7 @@ export default function MainLayout({ api, showNavbar = false }) {
     const [input, setInput] = useState('keyboard');
     const previousView = useRef('workspace');
     const logoRef = useRef(null);
+    const fullscreenButtonRef = useRef(null);
     const [feedback, setFeedback] = useState({ message: 'Ready', result: '' });
     const report = useCallback((message, result = '') => setFeedback({ message, result }), []);
 
@@ -39,7 +41,8 @@ export default function MainLayout({ api, showNavbar = false }) {
                     selectView(previousView.current);
                     logoRef.current.focus();
                 }} />}
-                <nav className="mode-switch" aria-label="Input workspace" hidden={view === 'about'}>
+                <div className="workspace-toolbar" hidden={view === 'about'}>
+                <nav className="mode-switch" aria-label="Input workspace">
                     {[['workspace', 'Mouse + Input'], ['controller', 'Controller']].map(([id, label]) => (
                         <button key={id} type="button" className={`mode-button ${view === id ? 'active' : ''}`}
                             aria-pressed={view === id} onClick={() => selectView(id)}>
@@ -47,6 +50,8 @@ export default function MainLayout({ api, showNavbar = false }) {
                         </button>
                     ))}
                 </nav>
+                {view === 'controller' && <ControllerFullscreenButton buttonRef={fullscreenButtonRef} />}
+                </div>
                 {/* Keep the text draft and sensitivity when switching views. */}
                 <ResizableWorkspace active={view === 'workspace'}
                     mouse={<Mouse api={api} report={report} active={view === 'workspace'} />}>
@@ -60,7 +65,7 @@ export default function MainLayout({ api, showNavbar = false }) {
                         </div>
                     </div>
                 </ResizableWorkspace>
-                {view === 'controller' && <Controller api={api} report={report} />}
+                {view === 'controller' && <Controller api={api} report={report} fullscreenButtonRef={fullscreenButtonRef} />}
                 {view !== 'about' && /failed|error|wrong|could not|type something/i.test(feedback.message) && (
                     <p className="input-error" role="alert">{feedback.message}{feedback.result ? ` ${feedback.result}` : ''}</p>
                 )}

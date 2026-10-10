@@ -5,32 +5,51 @@
         }
 
         .controller-fullscreen-button {
-            width: auto;
-            height: 38px;
-            margin: 10px 0 0 auto;
-            padding: 0 14px;
-            border-top-width: 2px;
-            border-bottom-width: 2px;
-            border-top-color: #30343b;
-            border-bottom-color: #090a0c;
-            background: var(--surface-deep);
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
             color: var(--muted);
-            font-size: 12px;
         }
 
-        .controller-fullscreen-button .button-label {
-            background: transparent;
-            color: inherit;
-            padding: 0;
+        .controller-fullscreen-button:hover { background: var(--surface); color: var(--heading); }
+        .controller-fullscreen-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .controller-fullscreen-button .fullscreen-exit-icon { display: none; }
+        .controller-fullscreen-button[aria-pressed="true"] .fullscreen-enter-icon { display: none; }
+        .controller-fullscreen-button[aria-pressed="true"] .fullscreen-exit-icon { display: block; }
+
+        .controller-viewport {
+            position: relative;
+            width: 100%;
+            height: clamp(220px, calc(100dvh - 140px), 520px);
+            margin-top: 12px;
+            overflow: hidden;
+            container-type: size;
         }
 
         .controller-shell {
+            --controller-rotation: 0;
+            --controller-height: 100cqh;
+            --control-size: clamp(28px, calc((var(--controller-height) - 64px) / 5), 64px);
+            --stick-size: min(180px, calc(3 * var(--control-size) + 20px));
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100cqw;
+            height: 100cqh;
+            padding: 12px;
+            transform: translate(-50%, -50%);
             display: grid;
-            grid-template-columns: minmax(210px, 1fr) minmax(108px, 0.42fr) minmax(240px, 1.1fr);
-            gap: 18px;
+            grid-template-columns: minmax(0, 1fr) minmax(60px, 0.35fr) minmax(0, 1fr);
+            gap: 12px;
             align-items: center;
-            min-height: 330px;
-            margin-top: 20px;
+            min-height: 0;
+            margin: 0;
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
@@ -46,25 +65,36 @@
         }
 
         .movement-cluster {
-            grid-template-columns: repeat(2, minmax(78px, 110px));
-            grid-template-rows: 58px minmax(150px, 190px);
-            justify-content: center;
+            width: calc(3 * var(--control-size) + 20px);
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(2, var(--control-size)) calc(3 * var(--control-size) + 20px);
+            justify-self: start;
+        }
+
+        .controller-cluster .shoulder-button {
+            width: calc(1.5 * var(--control-size));
+            height: calc(0.75 * var(--control-size));
         }
 
         .action-cluster {
-            grid-template-columns: repeat(4, minmax(54px, 78px));
-            grid-template-rows: 58px repeat(3, minmax(54px, 78px));
+            grid-template-columns: repeat(3, var(--control-size));
+            grid-template-rows: repeat(5, var(--control-size));
             justify-content: center;
+            justify-self: end;
         }
 
         .controller-center {
             grid-template-columns: 1fr;
+            width: min(100%, 76px);
+            justify-self: center;
+            /* Align with the joystick and the three ABXY rows below the shoulders. */
+            transform: translateY(calc(var(--control-size) + 10px));
         }
 
         .controller-button {
             width: 100%;
             height: 100%;
-            min-height: 54px;
+            min-height: 0;
             margin: 0;
             border-top-width: 3px;
             border-bottom-width: 3px;
@@ -97,7 +127,7 @@
         .stick-pad {
             position: relative;
             grid-column: 1 / -1;
-            width: min(44vw, 180px);
+            width: var(--stick-size);
             aspect-ratio: 1;
             border: 1px solid var(--border);
             border-radius: 999px;
@@ -130,37 +160,41 @@
             border-radius: 8px;
         }
 
+        .action-cluster .shoulder-button {
+            grid-column: 1 / -1;
+        }
+
+        .action-cluster .shoulder-button:first-child {
+            grid-row: 1;
+        }
+
+        .action-cluster .shoulder-button:nth-child(2) { grid-row: 2; }
+
         .y-button {
             grid-column: 2;
-            grid-row: 2;
+            grid-row: 3;
         }
 
         .x-button {
             grid-column: 1;
-            grid-row: 3;
+            grid-row: 4;
         }
 
         .b-button {
             grid-column: 3;
-            grid-row: 3;
+            grid-row: 4;
         }
 
         .a-button {
             grid-column: 2;
-            grid-row: 4;
+            grid-row: 5;
         }
 
         .system-button {
-            height: 52px;
+            height: 34px;
+            font-size: 12px;
             border-radius: 8px;
             color: var(--muted);
-        }
-
-        .rotate-note {
-            display: none;
-            margin-top: 12px;
-            text-align: center;
-            font-size: 12px;
         }
 
         body.controller-fullscreen {
@@ -183,8 +217,7 @@
         body.controller-fullscreen .tagline,
         body.controller-fullscreen .mode-switch,
         body.controller-fullscreen #status,
-        body.controller-fullscreen #result,
-        body.controller-fullscreen .rotate-note {
+        body.controller-fullscreen #result {
             display: none;
         }
 
@@ -193,30 +226,31 @@
             inset: 0;
             display: block;
             padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+            padding-top: calc(56px + env(safe-area-inset-top));
             background: var(--background);
         }
 
-        body.controller-fullscreen .controller-fullscreen-button {
+        body.controller-fullscreen .workspace-toolbar {
             position: fixed;
             top: max(8px, env(safe-area-inset-top));
             right: max(10px, env(safe-area-inset-right));
-            z-index: 5;
+            z-index: 10;
             margin: 0;
-            opacity: 0.74;
         }
 
-        body.controller-fullscreen .controller-shell {
-            width: 100%;
+        body.controller-fullscreen .controller-viewport {
             height: 100%;
             min-height: 0;
             margin: 0;
-            padding-top: 34px;
         }
 
 @media (orientation: portrait) and (max-width: 720px) {
-    .controller-shell { min-height: 240px; grid-template-columns: 1fr; gap: 14px; }
-    .rotate-note { display: block; }
-}
-@media (orientation: landscape) and (max-height: 520px) {
-    .controller-shell { min-height: calc(100vh - 112px); margin-top: 8px; }
+    .controller-viewport { height: calc(100dvh - 140px); }
+    .controller-shell {
+        --controller-rotation: 90;
+        --controller-height: 100cqw;
+        width: 100cqh;
+        height: 100cqw;
+        transform: translate(-50%, -50%) rotate(90deg);
+    }
 }

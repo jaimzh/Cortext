@@ -25,6 +25,35 @@ function mockApi() {
 }
 
 describe('React input workspace', () => {
+    it.each([0, 90])('maps joystick movement into controller coordinates at %s degrees', angle => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        const stick = document.getElementById('leftStick');
+        stick.style.setProperty('--controller-rotation', String(angle));
+        vi.spyOn(stick, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 100, height: 100 });
+        fireEvent(stick, new MouseEvent('pointerdown', {
+            bubbles: true, clientX: angle === 90 ? 50 : 100, clientY: angle === 90 ? 100 : 50,
+        }));
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({
+            type: 'gamepad.stick', side: 'left', x: expect.closeTo(1, 5), y: expect.closeTo(0, 5),
+        });
+        fireEvent(stick, new MouseEvent('pointerup', { bubbles: true }));
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.stick', side: 'left', x: 0, y: 0 });
+    });
+
+    it('keeps the fullscreen icon outside the controller controls and toggles it', async () => {
+        render(<MainLayout api={mockApi()} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        const enter = screen.getByRole('button', { name: 'Enter fullscreen' });
+        expect(document.getElementById('controllerPanel').contains(enter)).toBe(false);
+        fireEvent.click(enter);
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Exit fullscreen' })).toBeTruthy());
+        expect(document.body.classList.contains('controller-fullscreen')).toBe(true);
+        fireEvent.click(screen.getByRole('button', { name: 'Exit fullscreen' }));
+        await waitFor(() => expect(document.body.classList.contains('controller-fullscreen')).toBe(false));
+    });
+
     it('uses the controller Space button to send a keyboard space press', async () => {
         const api = mockApi();
         render(<MainLayout api={api} />);
