@@ -80,7 +80,16 @@ export function initController(elements, api) {
         }
     }
 
-    function pressControl(button, pointerId) {
+    function updateTrigger(control, value) {
+        value = Math.round(Math.max(0, Math.min(1, value)) * 1000) / 1000;
+        if (control.value === value) return;
+        control.value = value;
+        control.button.style.setProperty('--trigger-pressure', `${value * 100}%`);
+        sendGamepadEvent({ type: 'gamepad.trigger', side: control.trigger, value });
+    }
+
+    function pressControl(button, event) {
+        const pointerId = event.pointerId;
         const gamepadButton = button.dataset.gamepadButton;
         const trigger = button.dataset.gamepadTrigger;
         const keyboardKey = button.dataset.keyboardKey;
@@ -90,7 +99,10 @@ export function initController(elements, api) {
             return;
         }
 
-        activePointers.set(pointerId, { button, gamepadButton, trigger, controlId });
+        const control = { button, gamepadButton, trigger, controlId,
+            startX: event.clientX, startY: event.clientY,
+            rotation: Number(getComputedStyle(button).getPropertyValue('--controller-rotation')) };
+        activePointers.set(pointerId, control);
         activeControls.add(controlId);
         button.classList.add("pressed");
 
@@ -101,11 +113,7 @@ export function initController(elements, api) {
                 button: gamepadButton,
             });
         } else if (trigger) {
-            sendGamepadEvent({
-                type: "gamepad.trigger",
-                side: trigger,
-                value: 1,
-            });
+            updateTrigger(control, 0.15);
         } else if (keyboardKey) {
             api.sendKeyboardKey(keyboardKey).catch(error => {
                 if (!disposed) statusText.textContent = `Key press failed: ${error.message}`;
@@ -133,11 +141,7 @@ export function initController(elements, api) {
                 button: control.gamepadButton,
             });
         } else if (control.trigger) {
-            sendGamepadEvent({
-                type: "gamepad.trigger",
-                side: control.trigger,
-                value: 0,
-            });
+            updateTrigger(control, 0);
         }
     }
 
@@ -150,11 +154,7 @@ export function initController(elements, api) {
                     button: control.gamepadButton,
                 });
             } else if (control.trigger) {
-                sendGamepadEvent({
-                    type: "gamepad.trigger",
-                    side: control.trigger,
-                    value: 0,
-                });
+                updateTrigger(control, 0);
             }
         });
 
@@ -212,7 +212,18 @@ export function initController(elements, api) {
                 // Pointer capture is best-effort on mobile browsers.
             }
 
-            pressControl(button, event.pointerId);
+            pressControl(button, event);
+        });
+
+        listen(button, 'pointermove', event => {
+            if (controllerPanel.dataset.editing === 'true') return;
+            const control = activePointers.get(event.pointerId);
+            if (!control?.trigger || control.button !== button) return;
+            event.preventDefault();
+            const angle = control.rotation * Math.PI / 180;
+            const distance = (event.clientY - control.startY) * Math.cos(angle)
+                - (event.clientX - control.startX) * Math.sin(angle);
+            updateTrigger(control, 0.15 + distance / 80);
         });
 
         listen(button, "pointerup", (event) => {
@@ -223,6 +234,8 @@ export function initController(elements, api) {
         listen(button, "pointercancel", (event) => {
             releaseControl(event.pointerId);
         });
+
+        listen(button, 'lostpointercapture', event => releaseControl(event.pointerId));
 
         listen(button, "contextmenu", (event) => {
             event.preventDefault();

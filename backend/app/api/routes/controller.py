@@ -2,7 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 
 from app.config.config import SESSION_TOKEN
 from app.services import mouse_control
-from app.services.copy_n_paste import insert_text, key_down, key_up, press_key, press_shortcut
+from app.services.copy_n_paste import apply_keyboard_input, insert_text, key_down, key_up, press_key, press_shortcut
 from app.services.session_state import mark_connected
 from app.services.virtual_gamepad import virtual_xbox
 
@@ -72,6 +72,10 @@ def handle_controller_event(event: dict):
 
     if event_type == "keyboard.type":
         insert_text(_text(event.get("text")), add_space=False)
+        return
+
+    if event_type == "keyboard.input":
+        apply_keyboard_input(event.get("delete", 0), event.get("text", ""))
         return
 
     if event_type == "keyboard.key":
@@ -149,18 +153,9 @@ async def controller_ws(websocket: WebSocket, token: str = ""):
     await websocket.accept()
     mark_connected()
 
-    try:
-        virtual_xbox.connect()
-        await websocket.send_json({
-            "type": "gamepad.status",
-            "available": True,
-            "message": "Native Xbox controller ready",
-        })
-    except Exception as error:
-        await websocket.send_json({
-            "type": "error",
-            "message": str(error),
-        })
+    # The shared socket also serves mouse and keyboard input without a gamepad.
+    # Controller clients initialize the virtual device with gamepad.connect.
+    await websocket.send_json({"type": "input.status", "message": "Input connection ready"})
 
     try:
         while True:
@@ -173,6 +168,7 @@ async def controller_ws(websocket: WebSocket, token: str = ""):
                 await websocket.send_json({
                     "type": "error",
                     "message": str(error),
+                    "source": event.get("type", "") if isinstance(event, dict) else "",
                 })
     except WebSocketDisconnect:
         return

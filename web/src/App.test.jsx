@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import MainLayout from './layouts/MainLayout.jsx';
 import Voice from './features/voice/Voice.jsx';
 import { createApi } from './services/api.js';
@@ -20,12 +20,127 @@ function mockApi() {
         sendControllerEvent: vi.fn().mockReturnValue(true),
         onControllerMessage: vi.fn().mockReturnValue(vi.fn()),
         onControllerOpen: vi.fn().mockReturnValue(vi.fn()),
+        connectInputSocket: vi.fn(),
+        onInputConnection: vi.fn(listener => { listener(true); return vi.fn(); }),
+        sendLiveKeyboardInput: vi.fn().mockReturnValue(true),
+        sendLiveKeyboardKey: vi.fn().mockReturnValue(true),
         loadModels: vi.fn().mockResolvedValue(null),
         uploadAudio: vi.fn().mockResolvedValue({ text: 'hello' }),
     };
 }
 
 describe('React input workspace', () => {
+    it('streams live text, spaces, deletion and autocorrect over the shared socket', () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('tab', { name: 'Live keyboard' }));
+        const input = screen.getByRole('textbox', { name: 'Live keyboard input' });
+        for (const value of ['h', 'hi', 'hi ', 'hi', 'hello']) fireEvent.change(input, { target: { value } });
+        expect(api.sendLiveKeyboardInput.mock.calls.map(([edit]) => edit)).toEqual([
+            { delete: 0, text: 'h' }, { delete: 0, text: 'i' }, { delete: 0, text: ' ' },
+            { delete: 1, text: '' }, { delete: 1, text: 'ello' },
+        ]);
+        expect(api.sendKeyboardText).not.toHaveBeenCalled();
+        expect(api.connectInputSocket).toHaveBeenCalledOnce();
+        expect(screen.getByRole('application', { name: 'Trackpad' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Enter', exact: true }));
+        expect(api.sendLiveKeyboardKey).toHaveBeenCalledWith('enter');
+        expect(input.value).toBe('');
+    });
+
+    it('streams phone composition immediately and does not replay text after disconnecting', () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('tab', { name: 'Live keyboard' }));
+        const input = screen.getByRole('textbox', { name: 'Live keyboard input' });
+        fireEvent.compositionStart(input);
+        fireEvent.change(input, { target: { value: 'n' } });
+        fireEvent.change(input, { target: { value: '你' } });
+        expect(api.sendLiveKeyboardInput.mock.calls.map(([edit]) => edit)).toEqual([
+            { delete: 0, text: 'n' }, { delete: 1, text: '你' },
+        ]);
+        fireEvent.compositionEnd(input, { data: '你' });
+        expect(api.sendLiveKeyboardInput).toHaveBeenCalledTimes(2);
+        expect(api.sendLiveKeyboardInput).toHaveBeenLastCalledWith({ delete: 1, text: '你' });
+        act(() => api.onInputConnection.mock.calls[0][0](false));
+        expect(input.disabled).toBe(true);
+        expect(input.value).toBe('');
+        act(() => api.onInputConnection.mock.calls[0][0](true));
+        expect(api.sendLiveKeyboardInput).toHaveBeenCalledTimes(2);
+        fireEvent.change(input, { target: { value: 'a' } });
+        expect(api.sendLiveKeyboardInput).toHaveBeenLastCalledWith({ delete: 0, text: 'a' });
+        fireEvent.click(screen.getByRole('tab', { name: 'Voice', exact: true }));
+        expect(api.onInputConnection.mock.results[0].value).toHaveBeenCalledOnce();
+        expect(api.onControllerMessage.mock.results[0].value).toHaveBeenCalledOnce();
+    });
+
+    it('sends each Android composing input before compositionend without duplicate events', () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('tab', { name: 'Live keyboard' }));
+        const input = screen.getByRole('textbox', { name: 'Live keyboard input' });
+        fireEvent.compositionStart(input);
+        for (const value of ['a', 'ab', 'abc']) fireEvent.input(input, { target: { value }, isComposing: true, inputType: 'insertCompositionText' });
+        expect(api.sendLiveKeyboardInput.mock.calls.map(([edit]) => edit)).toEqual([
+            { delete: 0, text: 'a' }, { delete: 0, text: 'b' }, { delete: 0, text: 'c' },
+        ]);
+        fireEvent.compositionEnd(input, { data: 'abc' });
+        expect(api.sendLiveKeyboardInput).toHaveBeenCalledTimes(3);
+        fireEvent.click(screen.getByRole('button', { name: 'Enter', exact: true }));
+        expect(api.sendLiveKeyboardKey).toHaveBeenCalledWith('enter');
+    });
+
+    it('sends Enter from the Return button beside voice recording', async () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('tab', { name: 'Voice', exact: true }));
+        const record = screen.getByRole('button', { name: 'Start Recording' });
+        const returnButton = screen.getByRole('button', { name: 'Return', exact: true });
+        expect(returnButton.parentElement).toBe(record.parentElement);
+        fireEvent.click(returnButton);
+        await waitFor(() => expect(api.sendKeyboardKey).toHaveBeenCalledWith('enter'));
+        expect(api.uploadAudio).not.toHaveBeenCalled();
+    });
+
+    it.each([['LT', 'left', 0], ['RT', 'right', 90]])('adjusts %s pressure with sliding at %s orientation', (label, side, rotation) => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        const trigger = screen.getByRole('button', { name: label, exact: true });
+        trigger.style.setProperty('--controller-rotation', String(rotation));
+        const pointer = (type, distance = 0) => fireEvent(trigger, new MouseEvent(type, {
+            bubbles: true, clientX: rotation === 90 ? 100 - distance : 100,
+            clientY: rotation === 90 ? 100 : 100 + distance,
+        }));
+        pointer('pointerdown');
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.trigger', side, value: 0.15 });
+        pointer('pointermove', 40);
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.trigger', side, value: 0.65 });
+        expect(trigger.style.getPropertyValue('--trigger-pressure')).toBe('65%');
+        pointer('pointermove', 100);
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.trigger', side, value: 1 });
+        pointer('pointermove', 20);
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.trigger', side, value: 0.4 });
+        pointer('pointermove', -100);
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.trigger', side, value: 0 });
+        pointer('pointermove', 40);
+        pointer('pointercancel');
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.trigger', side, value: 0 });
+        expect(trigger.style.getPropertyValue('--trigger-pressure')).toBe('0%');
+        expect(trigger.classList.contains('pressed')).toBe(false);
+    });
+
+    it('releases trigger pressure when entering the HUD editor', () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        const trigger = screen.getByRole('button', { name: 'LT', exact: true });
+        fireEvent(trigger, new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 100 }));
+        fireEvent.click(screen.getByRole('button', { name: 'Edit layout' }));
+        expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.trigger', side: 'left', value: 0 });
+        expect(trigger.classList.contains('pressed')).toBe(false);
+    });
+
     it('edits rotated controls without sending gameplay input, saves sizes and restores the layout', () => {
         const initial = Object.fromEntries(HUD_IDS.map(id => [id, { x: 0.5, y: 0.5, scale: 1 }]));
         localStorage.setItem(HUD_STORAGE_KEY, JSON.stringify(initial));
@@ -226,11 +341,16 @@ describe('React input workspace', () => {
     it('switches ribbon tabs with arrow keys and moves focus to the selected tab', () => {
         render(<MainLayout api={mockApi()} />);
         fireEvent.keyDown(screen.getByRole('tab', { name: 'Keyboard' }), { key: 'ArrowRight' });
+        const live = screen.getByRole('tab', { name: 'Live keyboard' });
+        expect(live.getAttribute('aria-selected')).toBe('true');
+        expect(document.activeElement).toBe(live);
+        fireEvent.keyDown(live, { key: 'ArrowRight' });
         const voice = screen.getByRole('tab', { name: 'Voice' });
         expect(voice.getAttribute('aria-selected')).toBe('true');
         expect(document.activeElement).toBe(voice);
         expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe('voice-tab');
         fireEvent.keyDown(voice, { key: 'ArrowLeft' });
+        fireEvent.keyDown(live, { key: 'ArrowLeft' });
         expect(screen.getByRole('textbox')).toBeTruthy();
     });
 });

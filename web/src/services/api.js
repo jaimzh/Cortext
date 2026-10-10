@@ -22,22 +22,33 @@ export function createApi(token) {
     let reconnectTimer = null;
     const controllerMessageListeners = new Set();
     const controllerOpenListeners = new Set();
+    const inputConnectionListeners = new Set();
+
+    function notifyInputConnection(connected) {
+        inputConnectionListeners.forEach(listener => listener(connected));
+    }
 
     function connectControllerSocket() {
         if (disposed || !token || controllerSocket?.readyState === WebSocket.OPEN || controllerSocket?.readyState === WebSocket.CONNECTING) {
             return;
         }
 
-        controllerSocket = new WebSocket(`${CONTROLLER_WS_URL}?token=${encodeURIComponent(token)}`);
+        const socket = new WebSocket(`${CONTROLLER_WS_URL}?token=${encodeURIComponent(token)}`);
+        controllerSocket = socket;
+        notifyInputConnection(false);
 
         controllerSocket.addEventListener("open", () => {
+            if (disposed || controllerSocket !== socket) return;
+            notifyInputConnection(true);
             controllerOpenListeners.forEach((listener) => listener());
         });
 
-        controllerSocket.addEventListener("close", () => {
+        controllerSocket.addEventListener("close", event => {
+            if (controllerSocket !== socket) return;
             controllerSocket = null;
+            notifyInputConnection(false);
 
-            if (!disposed && !reconnectTimer) {
+            if (!disposed && event.code !== 1008 && !reconnectTimer) {
                 reconnectTimer = setTimeout(() => {
                     reconnectTimer = null;
                     connectControllerSocket();
@@ -46,7 +57,7 @@ export function createApi(token) {
         });
 
         controllerSocket.addEventListener("error", () => {
-            controllerSocket?.close();
+            socket.close();
         });
 
         controllerSocket.addEventListener("message", (event) => {
@@ -85,10 +96,24 @@ export function createApi(token) {
             clearTimeout(reconnectTimer);
             controllerMessageListeners.clear();
             controllerOpenListeners.clear();
+            inputConnectionListeners.clear();
             controllerSocket?.close();
         },
         sendControllerEvent(event) {
             return sendControllerEventOverSocket(event);
+        },
+
+        connectInputSocket: connectControllerSocket,
+        onInputConnection(listener) {
+            inputConnectionListeners.add(listener);
+            listener(controllerSocket?.readyState === WebSocket.OPEN);
+            return () => inputConnectionListeners.delete(listener);
+        },
+        sendLiveKeyboardInput(edit) {
+            return sendControllerEventOverSocket({ type: 'keyboard.input', ...edit });
+        },
+        sendLiveKeyboardKey(key) {
+            return sendControllerEventOverSocket({ type: 'keyboard.key', key });
         },
 
         onControllerMessage(listener) {

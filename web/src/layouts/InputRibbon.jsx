@@ -1,6 +1,6 @@
-import { KeyboardIcon, MicrophoneIcon } from '@phosphor-icons/react';
+import { KeyboardIcon, LightningIcon, MicrophoneIcon } from '@phosphor-icons/react';
 
-const tabs = [['keyboard', 'Keyboard'], ['voice', 'Voice']];
+const tabs = [['keyboard', 'Keyboard'], ['live-keyboard', 'Live keyboard'], ['voice', 'Voice']];
 
 export default function InputRibbon({ selected, onSelect }) {
     function navigate(event, index) {
@@ -20,9 +20,12 @@ export default function InputRibbon({ selected, onSelect }) {
             className="input-ribbon-tab" aria-label={label} title={label} aria-selected={selected === id}
             aria-controls={`${id}-input-panel`} tabIndex={selected === id ? 0 : -1}
             onClick={() => onSelect(id)} onKeyDown={event => navigate(event, index)}>
-            {id === 'keyboard'
-                ? <KeyboardIcon size={24} weight={selected === id ? 'fill' : 'regular'} aria-hidden="true" focusable="false" />
-                : <MicrophoneIcon size={24} weight={selected === id ? 'fill' : 'regular'} aria-hidden="true" focusable="false" />}
+            {id === 'voice'
+                ? <MicrophoneIcon size={24} weight={selected === id ? 'fill' : 'regular'} aria-hidden="true" focusable="false" />
+                : <span className={id === 'live-keyboard' ? 'live-keyboard-icon' : undefined}>
+                    <KeyboardIcon size={24} weight={selected === id ? 'fill' : 'regular'} aria-hidden="true" focusable="false" />
+                    {id === 'live-keyboard' && <LightningIcon className="live-keyboard-badge" size={12} weight="fill" aria-hidden="true" />}
+                </span>}
         </button>)}
     </div>;
 }

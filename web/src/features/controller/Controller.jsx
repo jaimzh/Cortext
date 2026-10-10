@@ -32,7 +32,8 @@ export default function Controller({ api, report, fullscreenButtonRef, editing =
                 <div ref={shellRef} className="controller-shell" role="application" aria-label="Game controller"
                     data-custom-layout={Boolean(editor.layout)} {...editor.handlers}>
                     <div className="controller-cluster movement-cluster" aria-label="Movement controls">
-                        <button {...editor.props('lt')} className="controller-button shoulder-button" type="button" data-gamepad-trigger="left">
+                        <button {...editor.props('lt')} className="controller-button shoulder-button" type="button" data-gamepad-trigger="left"
+                            title="Slide down to increase trigger pressure; release to reset">
                             <span className="button-label">LT</span>
                         </button>
                         <button {...editor.props('lb')} className="controller-button shoulder-button" type="button" data-gamepad-button="lb">
@@ -53,7 +54,8 @@ export default function Controller({ api, report, fullscreenButtonRef, editing =
                     </div>
 
                     <div className="controller-cluster action-cluster" aria-label="Action controls">
-                        <button {...editor.props('rt')} className="controller-button shoulder-button" type="button" data-gamepad-trigger="right">
+                        <button {...editor.props('rt')} className="controller-button shoulder-button" type="button" data-gamepad-trigger="right"
+                            title="Slide down to increase trigger pressure; release to reset">
                             <span className="button-label">RT</span>
                         </button>
                         <button {...editor.props('rb')} className="controller-button shoulder-button" type="button" data-gamepad-button="rb">

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Mouse from '../features/mouse/Mouse.jsx';
 import Keyboard from '../features/keyboard/Keyboard.jsx';
+import LiveKeyboard from '../features/keyboard/LiveKeyboard.jsx';
 import Voice from '../features/voice/Voice.jsx';
 import Controller from '../features/controller/Controller.jsx';
 import ControllerFullscreenButton from '../features/controller/ControllerFullscreenButton.jsx';
@@ -70,6 +71,9 @@ export default function MainLayout({ api, showNavbar = false }) {
                         <InputRibbon selected={input} onSelect={next => { setInput(next); report('Ready'); }} />
                         <div id="keyboard-input-panel" role="tabpanel" aria-labelledby="keyboard-tab" hidden={input !== 'keyboard'}>
                             <Keyboard api={api} report={report} />
+                        </div>
+                        <div id="live-keyboard-input-panel" role="tabpanel" aria-labelledby="live-keyboard-tab" hidden={input !== 'live-keyboard'}>
+                            {view === 'workspace' && input === 'live-keyboard' && <LiveKeyboard api={api} report={report} />}
                         </div>
                         <div id="voice-input-panel" role="tabpanel" aria-labelledby="voice-tab" hidden={input !== 'voice'}>
                             {view === 'workspace' && input === 'voice' && <Voice api={api} report={report} />}

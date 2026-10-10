@@ -64,6 +64,25 @@ def press_key(key: str):
     pyautogui.press(normalized_key)
 
 
+def apply_keyboard_input(delete_count: int, text: str):
+    """Apply one ordered live edit without trimming spaces or adding a suffix."""
+    if type(delete_count) is not int or not 0 <= delete_count <= 10000:
+        raise ValueError("Live keyboard delete count must be between 0 and 10000.")
+    if not isinstance(text, str) or len(text) > 10000:
+        raise ValueError("Live keyboard text must be at most 10000 characters.")
+    if delete_count:
+        pyautogui.press("backspace", presses=delete_count, interval=0, _pause=False)
+    if not text:
+        return
+    if all(32 <= ord(char) <= 126 or char in "\n\r\t" for char in text):
+        pyautogui.write(text, interval=0, _pause=False)
+    else:
+        # Clipboard insertion supports composed and non-ASCII phone input.
+        pyperclip.copy(text)
+        time.sleep(0.05)
+        pyautogui.hotkey("ctrl", "v", _pause=False)
+
+
 def key_down(key: str):
     normalized_key = ALLOWED_HELD_KEYS.get(key)
 
