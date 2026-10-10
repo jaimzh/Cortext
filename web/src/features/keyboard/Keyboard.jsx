@@ -66,6 +66,9 @@ export default function Keyboard({ api, report }) {
             </button>
             <div id="advancedShortcuts" className="shortcut-bar advanced-shortcuts" aria-label="Advanced keyboard shortcuts" hidden={!moreKeys}>
                 {buttons(advanced, true)}
+                <button className="shortcut-button" type="button" onClick={() => press('space')}>
+                    <span className="button-label">Space</span>
+                </button>
             </div>
         </section>
     );

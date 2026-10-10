@@ -100,35 +100,42 @@
             pointer-events: none;
         }
 
-        .trackpad-buttons {
+        .trackpad-actions {
+            position: relative;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: minmax(0, 1fr) 42px;
             gap: 8px;
             margin-top: 12px;
         }
 
+        .trackpad-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
         .trackpad-settings {
-            margin-top: 12px;
             color: var(--text);
             font-size: 14px;
         }
 
-        .trackpad-settings summary {
-            display: flex;
-            width: 100%;
-            align-items: center;
-            gap: 12px;
-            min-height: 40px;
-            cursor: pointer;
-            list-style: none;
+        .trackpad-settings-button {
+            display: grid; place-items: center; width: 42px; height: 42px;
+            margin: 0; padding: 0; border: 0; border-radius: 6px;
+            background: transparent; color: var(--muted);
         }
 
-        .trackpad-settings summary > * { pointer-events: none; }
-        .trackpad-settings summary::-webkit-details-marker { display: none; }
-        .trackpad-settings summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-        .trackpad-settings summary:hover { color: var(--heading); }
-        .trackpad-settings summary output { margin-left: auto; }
-        .trackpad-settings[open] .sensitivity-caret { transform: rotate(180deg); }
+        .trackpad-settings-button:hover { background: var(--surface); color: var(--heading); }
+        .trackpad-settings-button[aria-expanded="true"] { color: var(--accent); }
+        .trackpad-settings-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .trackpad-settings-popover {
+            position: absolute; right: 0; top: calc(100% + 8px); z-index: 10;
+            width: min(100%, 320px); padding: 16px; border: 1px solid var(--border);
+            border-radius: 8px; background: var(--surface-deep);
+            box-shadow: 0 8px 24px #0006;
+        }
+        .trackpad-settings-popover label { margin: 0; }
+        .trackpad-settings-popover output { margin-left: auto; }
 
         .trackpad-settings output {
             color: var(--muted);

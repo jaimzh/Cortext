@@ -35,7 +35,7 @@
             overscroll-behavior: none;
         }
 
-        :root:has(body.controller-fullscreen) { scrollbar-gutter: auto; }
+        :root:has(body.app-fullscreen) { scrollbar-gutter: auto; }
 
         main {
             width: min(100%, 960px);
@@ -304,4 +304,4 @@
             }
         }
 
-#root { width: 100%; }
+#root { width: 100%; min-width: 0; }

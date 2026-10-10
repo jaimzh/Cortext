@@ -6,7 +6,6 @@ export function initController(elements, api) {
     }
     const {
         controllerPanel,
-        controllerFullscreenButton,
         controllerButtons,
         controllerSticks,
         statusText,
@@ -14,49 +13,6 @@ export function initController(elements, api) {
 
     const activePointers = new Map();
     const activeControls = new Set();
-
-    function setControllerFullscreen(active) {
-        if (disposed) return;
-        document.body.classList.toggle("controller-fullscreen", active);
-        controllerFullscreenButton.setAttribute("aria-pressed", String(active));
-        const label = active ? 'Exit fullscreen' : 'Enter fullscreen';
-        controllerFullscreenButton.setAttribute('aria-label', label);
-        controllerFullscreenButton.setAttribute('title', label);
-    }
-
-    async function toggleControllerFullscreen() {
-        const shouldEnter = !document.body.classList.contains("controller-fullscreen");
-
-        if (shouldEnter) {
-            try {
-                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                    await document.documentElement.requestFullscreen();
-                }
-            } catch (error) {
-                // Some mobile browsers reject fullscreen; keep the in-app layout.
-            }
-
-            setControllerFullscreen(true);
-        } else {
-            try {
-                if (document.fullscreenElement && document.exitFullscreen) {
-                    await document.exitFullscreen();
-                }
-            } catch (error) {
-                // Keep UI responsive even if the browser rejects exitFullscreen.
-            }
-
-            setControllerFullscreen(false);
-        }
-    }
-
-    listen(document, "fullscreenchange", () => {
-        if (!document.fullscreenElement) {
-            setControllerFullscreen(false);
-        }
-    });
-
-    listen(controllerFullscreenButton, "click", toggleControllerFullscreen);
 
     const removeMessage = api.onControllerMessage?.((message) => {
         if (message.type === "gamepad.status") {
@@ -321,8 +277,6 @@ export function initController(elements, api) {
         events.abort();
         removeMessage?.();
         removeOpen?.();
-        setControllerFullscreen(false);
         disposed = true;
-        if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     };
 }

@@ -83,5 +83,7 @@ export default function LiveKeyboard({ api, report }) {
             {keys.map(([key, label]) => <button key={key} type="button" className="shortcut-button"
                 disabled={!connected || failed} onClick={() => press(key)}><span className="button-label">{label}</span></button>)}
         </div>
+        <button type="button" className="shortcut-button live-space-button" disabled={!connected || failed}
+            onClick={() => update(committed.current + ' ')}><span className="button-label">Space</span></button>
     </section>;
 }

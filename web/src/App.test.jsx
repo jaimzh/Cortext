@@ -30,6 +30,33 @@ function mockApi() {
 }
 
 describe('React input workspace', () => {
+    it('shares fullscreen across mouse input and controller views and handles browser exit', async () => {
+        render(<MainLayout api={mockApi()} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Enter fullscreen' }));
+        await waitFor(() => expect(document.body.classList.contains('app-fullscreen')).toBe(true));
+        expect(document.body.classList.contains('controller-fullscreen')).toBe(false);
+        expect(screen.getByRole('application', { name: 'Trackpad' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        expect(document.body.classList.contains('controller-fullscreen')).toBe(true);
+        expect(screen.getByRole('button', { name: 'Exit fullscreen' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Mouse + Input', exact: true }));
+        expect(document.body.classList.contains('app-fullscreen')).toBe(true);
+        expect(document.body.classList.contains('controller-fullscreen')).toBe(false);
+        act(() => document.dispatchEvent(new Event('fullscreenchange')));
+        expect(document.body.classList.contains('app-fullscreen')).toBe(false);
+        expect(screen.getByRole('button', { name: 'Enter fullscreen' })).toBeTruthy();
+    });
+
+    it('sends a space key from the regular keyboard More keys panel', async () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        expect(screen.queryByRole('button', { name: 'Space', exact: true })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'More keys' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Space', exact: true }));
+        await waitFor(() => expect(api.sendKeyboardKey).toHaveBeenCalledWith('space'));
+        expect(api.sendKeyboardShortcut).not.toHaveBeenCalledWith('space');
+    });
+
     it('streams live text, spaces, deletion and autocorrect over the shared socket', () => {
         const api = mockApi();
         render(<MainLayout api={api} />);
@@ -43,6 +70,11 @@ describe('React input workspace', () => {
         expect(api.sendKeyboardText).not.toHaveBeenCalled();
         expect(api.connectInputSocket).toHaveBeenCalledOnce();
         expect(screen.getByRole('application', { name: 'Trackpad' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Space', exact: true }));
+        expect(input.value).toBe('hello ');
+        expect(api.sendLiveKeyboardInput).toHaveBeenLastCalledWith({ delete: 0, text: ' ' });
+        fireEvent.change(input, { target: { value: 'hello w' } });
+        expect(api.sendLiveKeyboardInput).toHaveBeenLastCalledWith({ delete: 0, text: 'w' });
         fireEvent.click(screen.getByRole('button', { name: 'Enter', exact: true }));
         expect(api.sendLiveKeyboardKey).toHaveBeenCalledWith('enter');
         expect(input.value).toBe('');
@@ -215,17 +247,18 @@ describe('React input workspace', () => {
         await waitFor(() => expect(document.body.classList.contains('controller-fullscreen')).toBe(false));
     });
 
-    it('uses the controller Space button to send a keyboard space press', async () => {
+    it('uses the controller Select button to press and release gamepad back', () => {
         const api = mockApi();
         render(<MainLayout api={api} />);
         fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
         expect(screen.queryByRole('button', { name: 'Back', exact: true })).toBeNull();
-        const space = screen.getByRole('button', { name: 'Space', exact: true });
-        fireEvent.pointerDown(space, { pointerId: 2 });
-        fireEvent.pointerUp(space, { pointerId: 2 });
-        await waitFor(() => expect(api.sendKeyboardKey).toHaveBeenCalledWith('space'));
-        expect(api.sendKeyboardKey).toHaveBeenCalledOnce();
-        expect(api.sendControllerEvent).not.toHaveBeenCalledWith(expect.objectContaining({ button: 'back' }));
+        expect(screen.queryByRole('button', { name: 'Space', exact: true })).toBeNull();
+        const select = screen.getByRole('button', { name: 'Select', exact: true });
+        fireEvent.pointerDown(select, { pointerId: 2 });
+        fireEvent.pointerUp(select, { pointerId: 2 });
+        expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.button', action: 'down', button: 'back' });
+        expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.button', action: 'up', button: 'back' });
+        expect(api.sendKeyboardKey).not.toHaveBeenCalled();
     });
 
     it('opens the info page from the logo and returns without losing the keyboard draft', () => {

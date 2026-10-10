@@ -4,25 +4,6 @@
             touch-action: none;
         }
 
-        .controller-fullscreen-button {
-            display: grid;
-            place-items: center;
-            width: 44px;
-            height: 44px;
-            margin: 0;
-            padding: 0;
-            border: 0;
-            border-radius: 6px;
-            background: transparent;
-            color: var(--muted);
-        }
-
-        .controller-fullscreen-button:hover { background: var(--surface); color: var(--heading); }
-        .controller-fullscreen-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-        .controller-fullscreen-button .fullscreen-exit-icon { display: none; }
-        .controller-fullscreen-button[aria-pressed="true"] .fullscreen-enter-icon { display: none; }
-        .controller-fullscreen-button[aria-pressed="true"] .fullscreen-exit-icon { display: block; }
-
         .controller-viewport {
             position: relative;
             width: 100%;
@@ -221,7 +202,6 @@
 
         body.controller-fullscreen .brand,
         body.controller-fullscreen .tagline,
-        body.controller-fullscreen .mode-switch,
         body.controller-fullscreen #status,
         body.controller-fullscreen #result {
             display: none;
@@ -240,6 +220,7 @@
             position: fixed;
             top: max(8px, env(safe-area-inset-top));
             right: max(10px, env(safe-area-inset-right));
+            left: max(10px, env(safe-area-inset-left));
             z-index: 10;
             margin: 0;
         }
@@ -314,7 +295,6 @@ body.controller-fullscreen .controller-panel[data-editing="true"] .controller-vi
 @media (max-width: 540px) {
     .controller-edit-button { width: 30px; padding: 0; }
     body.controller-mode .mode-button { font-size: 10px; padding-inline: 4px; }
-    .controller-fullscreen-button { width: 32px; }
     .workspace-toolbar { gap: 4px; }
     .hud-editor-toolbar { gap: 4px; }
     .hud-editor-toolbar label { gap: 4px; }

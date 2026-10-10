@@ -4,11 +4,11 @@ import { useHudEditor } from './useHudEditor.js';
 import { HUD_IDS } from './hudLayout.js';
 import './Controller.css';
 
-export default function Controller({ api, report, fullscreenButtonRef, editing = false, onFinishEditing }) {
+export default function Controller({ api, report, editing = false, onFinishEditing }) {
     const panelRef = useRef(null);
     const shellRef = useRef(null);
     const editor = useHudEditor(shellRef, editing, onFinishEditing);
-    useController(panelRef, api, report, fullscreenButtonRef);
+    useController(panelRef, api, report);
     useEffect(() => {
         if (editing) panelRef.current.dispatchEvent(new Event('controller:edit'));
     }, [editing]);
@@ -17,7 +17,7 @@ export default function Controller({ api, report, fullscreenButtonRef, editing =
             {editing && <div className="hud-editor-toolbar" aria-label="Layout settings">
                 <label className="hud-control-picker">Control
                     <select aria-label="Select control" value={editor.selected} onChange={event => editor.setSelected(event.target.value)}>
-                        {HUD_IDS.map(id => <option key={id} value={id}>{id === 'stick' ? 'Joystick' : id === 'space' ? 'Space' : id === 'start' ? 'Start' : id.toUpperCase()}</option>)}
+                        {HUD_IDS.map(id => <option key={id} value={id}>{id === 'stick' ? 'Joystick' : id === 'space' ? 'Select' : id === 'start' ? 'Start' : id.toUpperCase()}</option>)}
                     </select>
                 </label>
                 <label className="hud-size-picker">Size
@@ -45,8 +45,8 @@ export default function Controller({ api, report, fullscreenButtonRef, editing =
                     </div>
 
                     <div className="controller-center" aria-label="System controls">
-                        <button {...editor.props('space')} className="controller-button system-button" type="button" data-keyboard-key="space">
-                            <span className="button-label">Space</span>
+                        <button {...editor.props('space')} className="controller-button system-button" type="button" data-gamepad-button="back">
+                            <span className="button-label">Select</span>
                         </button>
                         <button {...editor.props('start')} className="controller-button system-button" type="button" data-gamepad-button="start">
                             <span className="button-label">Start</span>
