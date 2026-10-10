@@ -24,8 +24,8 @@ export default function Controller({ api, report }) {
                     </div>
 
                     <div className="controller-center" aria-label="System controls">
-                        <button className="controller-button system-button" type="button" data-gamepad-button="back">
-                            <span className="button-label">Back</span>
+                        <button className="controller-button system-button" type="button" data-keyboard-key="space">
+                            <span className="button-label">Space</span>
                         </button>
                         <button className="controller-button system-button" type="button" data-gamepad-button="start">
                             <span className="button-label">Start</span>

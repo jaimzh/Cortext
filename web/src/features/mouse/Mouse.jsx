@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { CaretDownIcon } from '@phosphor-icons/react';
 import { useMouse } from './useMouse.js';
 import './Mouse.css';
 
@@ -30,11 +31,14 @@ export default function Mouse({ api, report, active = true }) {
                         <span className="button-label">Right</span>
                     </button>
                 </div>
-                <div className="trackpad-settings" aria-label="Trackpad settings">
-                    <label htmlFor="sensitivitySlider">Sensitivity</label>
-                    <output id="sensitivityValue">1.8x</output>
-                    <input id="sensitivitySlider" type="range" min="0.5" max="3" step="0.1" defaultValue="1.8" />
-                </div>
+                <details className="trackpad-settings">
+                    <summary>
+                        <span>Sensitivity</span>
+                        <output id="sensitivityValue">1.8x</output>
+                        <CaretDownIcon size={16} aria-hidden="true" className="sensitivity-caret" />
+                    </summary>
+                    <input id="sensitivitySlider" aria-label="Sensitivity" type="range" min="0.5" max="3" step="0.1" defaultValue="1.8" />
+                </details>
             </section>
     );
 }

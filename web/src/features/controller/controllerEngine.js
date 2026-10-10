@@ -82,7 +82,8 @@ export function initController(elements, api) {
     function pressControl(button, pointerId) {
         const gamepadButton = button.dataset.gamepadButton;
         const trigger = button.dataset.gamepadTrigger;
-        const controlId = gamepadButton ? `button:${gamepadButton}` : `trigger:${trigger}`;
+        const keyboardKey = button.dataset.keyboardKey;
+        const controlId = keyboardKey ? `key:${keyboardKey}` : gamepadButton ? `button:${gamepadButton}` : `trigger:${trigger}`;
 
         if (activeControls.has(controlId)) {
             return;
@@ -103,6 +104,10 @@ export function initController(elements, api) {
                 type: "gamepad.trigger",
                 side: trigger,
                 value: 1,
+            });
+        } else if (keyboardKey) {
+            api.sendKeyboardKey(keyboardKey).catch(error => {
+                if (!disposed) statusText.textContent = `Key press failed: ${error.message}`;
             });
         }
 

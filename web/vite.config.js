@@ -15,5 +15,5 @@ export default defineConfig({
             ws: route === '/controller',
         }])),
     },
-    test: { environment: 'jsdom' },
+    test: { environment: 'jsdom', setupFiles: ['./src/testSetup.js'] },
 });

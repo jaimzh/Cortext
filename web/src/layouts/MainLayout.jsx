@@ -1,12 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Mouse from '../features/mouse/Mouse.jsx';
 import Keyboard from '../features/keyboard/Keyboard.jsx';
 import Voice from '../features/voice/Voice.jsx';
 import Controller from '../features/controller/Controller.jsx';
+import InputRibbon from './InputRibbon.jsx';
+import ResizableWorkspace from './ResizableWorkspace.jsx';
+import AppNavbar from './AppNavbar.jsx';
+import About from '../pages/About.jsx';
 import './MainLayout.css';
 
-export default function MainLayout({ api }) {
+export default function MainLayout({ api, showNavbar = false }) {
     const [view, setView] = useState('workspace');
+    const [input, setInput] = useState('keyboard');
+    const previousView = useRef('workspace');
+    const logoRef = useRef(null);
     const [feedback, setFeedback] = useState({ message: 'Ready', result: '' });
     const report = useCallback((message, result = '') => setFeedback({ message, result }), []);
 
@@ -22,11 +29,18 @@ export default function MainLayout({ api }) {
 
     return (
         <main>
-            <h1 className="brand">CORTEXT</h1>
-            <p className="tagline">Your phone, at the cursor.</p>
+            {showNavbar && <AppNavbar buttonRef={logoRef} onAbout={() => {
+                if (view === 'about') return;
+                previousView.current = view;
+                selectView('about');
+            }} />}
             <div className="controls">
-                <nav className="mode-switch" aria-label="Input workspace">
-                    {[['workspace', 'Mouse + Keyboard'], ['voice', 'Voice'], ['controller', 'Controller']].map(([id, label]) => (
+                {view === 'about' && <About onBack={() => {
+                    selectView(previousView.current);
+                    logoRef.current.focus();
+                }} />}
+                <nav className="mode-switch" aria-label="Input workspace" hidden={view === 'about'}>
+                    {[['workspace', 'Mouse + Input'], ['controller', 'Controller']].map(([id, label]) => (
                         <button key={id} type="button" className={`mode-button ${view === id ? 'active' : ''}`}
                             aria-pressed={view === id} onClick={() => selectView(id)}>
                             <span className="button-label">{label}</span>
@@ -34,14 +48,22 @@ export default function MainLayout({ api }) {
                     ))}
                 </nav>
                 {/* Keep the text draft and sensitivity when switching views. */}
-                <div className="input-workspace" hidden={view !== 'workspace'}>
-                    <Mouse api={api} report={report} active={view === 'workspace'} />
-                    <Keyboard api={api} report={report} />
-                </div>
-                {view === 'voice' && <Voice api={api} report={report} />}
+                <ResizableWorkspace active={view === 'workspace'}
+                    mouse={<Mouse api={api} report={report} active={view === 'workspace'} />}>
+                    <div className="workspace-input">
+                        <InputRibbon selected={input} onSelect={next => { setInput(next); report('Ready'); }} />
+                        <div id="keyboard-input-panel" role="tabpanel" aria-labelledby="keyboard-tab" hidden={input !== 'keyboard'}>
+                            <Keyboard api={api} report={report} />
+                        </div>
+                        <div id="voice-input-panel" role="tabpanel" aria-labelledby="voice-tab" hidden={input !== 'voice'}>
+                            {view === 'workspace' && input === 'voice' && <Voice api={api} report={report} />}
+                        </div>
+                    </div>
+                </ResizableWorkspace>
                 {view === 'controller' && <Controller api={api} report={report} />}
-                <p id="status" role="status" aria-live="polite">{feedback.message}</p>
-                <pre id="result">{feedback.result}</pre>
+                {view !== 'about' && /failed|error|wrong|could not|type something/i.test(feedback.message) && (
+                    <p className="input-error" role="alert">{feedback.message}{feedback.result ? ` ${feedback.result}` : ''}</p>
+                )}
             </div>
         </main>
     );

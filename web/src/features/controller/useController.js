@@ -8,7 +8,7 @@ export function useController(panelRef, api, report) {
             controllerFullscreenButton: panel.querySelector("#controllerFullscreenButton"),
             controllerFullscreenLabel: panel.querySelector("#controllerFullscreenLabel"),
             controllerPanel: panel,
-            controllerButtons: panel.querySelectorAll('[data-gamepad-button], [data-gamepad-trigger]'),
+            controllerButtons: panel.querySelectorAll('[data-gamepad-button], [data-gamepad-trigger], [data-keyboard-key]'),
             controllerSticks: panel.querySelectorAll('[data-gamepad-stick]'),
             statusText: { set textContent(message) { report(message); } },
         }, api);

@@ -30,15 +30,15 @@
             margin: 0;
             border-top-width: 2px;
             border-bottom-width: 2px;
-            border-top-color: #30343b;
-            border-bottom-color: #090a0c;
-            background: #15171c;
-            color: var(--text);
+            border-top-color: var(--button-rim);
+            border-bottom-color: #006eb8;
+            background: var(--accent);
+            color: var(--heading);
             font-size: 18px;
         }
 
         .quick-send-button:hover {
-            background: var(--surface-deep);
+            background: color-mix(in srgb, var(--accent) 85%, white);
             border-top-color: var(--button-rim);
             border-bottom-color: #006eb8;
         }

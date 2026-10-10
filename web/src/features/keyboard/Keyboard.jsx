@@ -54,7 +54,7 @@ export default function Keyboard({ api, report }) {
             <div className="keyboard-input-wrap">
                 <textarea id="keyboardText" aria-label="Text to send" value={text} onChange={event => setText(event.target.value)}
                     placeholder="Type here, then send it to your computer." />
-                <button className="quick-send-button" type="button" aria-label="Send text" disabled={busy} onClick={sendText}>
+                <button className="quick-send-button" type="button" aria-label="Send text" aria-busy={busy} disabled={busy} onClick={sendText}>
                     <span className="button-label">↵</span>
                 </button>
             </div>
@@ -67,9 +67,6 @@ export default function Keyboard({ api, report }) {
             <div id="advancedShortcuts" className="shortcut-bar advanced-shortcuts" aria-label="Advanced keyboard shortcuts" hidden={!moreKeys}>
                 {buttons(advanced, true)}
             </div>
-            <button type="button" disabled={busy} onClick={sendText}>
-                <span className="button-label">{busy ? 'Sending...' : 'Send Text'}</span>
-            </button>
         </section>
     );
 }

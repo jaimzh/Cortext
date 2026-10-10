@@ -41,11 +41,18 @@ directly. Without a build, `/app` responds with a setup message and HTTP 503.
 - `src/services/api.js`: authenticated HTTP requests and shared WebSocket transport.
 - `src/styles/global.css`: shared styles and theme variables.
 
-Mouse and keyboard appear together in the default workspace. Switching away keeps
+The mouse stays above an icon ribbon that switches the lower panel between keyboard
+and voice. Controller has a separate top-level view. Switching away keeps
 the keyboard draft and sensitivity, but stops mouse gestures and releases a drag.
 Voice and controller unmount when their views close, releasing the microphone or
 held gamepad controls. Gesture engines attach to component refs through hooks;
 high-frequency movement does not trigger React rendering.
 
-The keyboard ribbon, additional keyboard modes, and draggable/resizable sidebar
+Drag the horizontal divider above the ribbon to resize the touchpad (180–640px).
+The touch scroll strip follows the same height. The divider uses dnd-kit React;
+resizing is restricted to the handle, so touchpad gestures remain independent.
+Focus the divider and use Up/Down (Shift for larger steps), Home/End for limits,
+or double-click to restore the default size. The height is saved on this device.
+
+Additional keyboard modes and the draggable/resizable sidebar
 are future additions. Keep their UI in the appropriate feature or layout folder.
