@@ -1,6 +1,8 @@
 export function initController(elements, api) {
     const {
         controllerPanel,
+        controllerFullscreenButton,
+        controllerFullscreenLabel,
         controllerButtons,
         controllerSticks,
         statusText,
@@ -8,6 +10,46 @@ export function initController(elements, api) {
 
     const activePointers = new Map();
     const activeControls = new Set();
+
+    function setControllerFullscreen(active) {
+        document.body.classList.toggle("controller-fullscreen", active);
+        controllerFullscreenButton.setAttribute("aria-pressed", String(active));
+        controllerFullscreenLabel.textContent = active ? "Exit" : "Fullscreen";
+    }
+
+    async function toggleControllerFullscreen() {
+        const shouldEnter = !document.body.classList.contains("controller-fullscreen");
+
+        if (shouldEnter) {
+            try {
+                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+            } catch (error) {
+                // Some mobile browsers reject fullscreen; keep the in-app layout.
+            }
+
+            setControllerFullscreen(true);
+        } else {
+            try {
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    await document.exitFullscreen();
+                }
+            } catch (error) {
+                // Keep UI responsive even if the browser rejects exitFullscreen.
+            }
+
+            setControllerFullscreen(false);
+        }
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement) {
+            setControllerFullscreen(false);
+        }
+    });
+
+    controllerFullscreenButton.addEventListener("click", toggleControllerFullscreen);
 
     api.onControllerMessage?.((message) => {
         if (message.type === "gamepad.status") {

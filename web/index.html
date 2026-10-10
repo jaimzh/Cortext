@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cortext</title>
-    <link rel="stylesheet" href="./styles/app.css?v=controller-touch-lock-1">
+    <link rel="stylesheet" href="./styles/app.css?v=controller-fullscreen-1">
 </head>
 <body>
     <main>
@@ -158,6 +158,9 @@
             </section>
 
             <section id="controllerPanel" class="panel controller-panel" hidden>
+                <button id="controllerFullscreenButton" class="controller-fullscreen-button" type="button">
+                    <span id="controllerFullscreenLabel" class="button-label">Fullscreen</span>
+                </button>
                 <div class="controller-shell" role="application" aria-label="Game controller">
                     <div class="controller-cluster movement-cluster" aria-label="Movement controls">
                         <button class="controller-button shoulder-button" type="button" data-gamepad-trigger="left">
@@ -207,7 +210,7 @@
             <pre id="result"></pre>
         </section>
     </main>
-    <script type="module" src="./scripts/main.js?v=controller-touch-lock-1"></script>
+    <script type="module" src="./scripts/main.js?v=controller-fullscreen-1"></script>
 </body>
 </html>
 

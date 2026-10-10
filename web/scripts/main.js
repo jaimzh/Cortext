@@ -1,9 +1,9 @@
-import { createApi } from "./api.js?v=controller-touch-lock-1";
-import { initController } from "./features/controller.js?v=controller-touch-lock-1";
-import { initKeyboard } from "./features/keyboard.js?v=controller-touch-lock-1";
-import { initTrackpad } from "./features/trackpad.js?v=controller-touch-lock-1";
-import { initVoice } from "./features/voice.js?v=controller-touch-lock-1";
-import { initModes } from "./ui/modes.js?v=controller-touch-lock-1";
+import { createApi } from "./api.js?v=controller-fullscreen-1";
+import { initController } from "./features/controller.js?v=controller-fullscreen-1";
+import { initKeyboard } from "./features/keyboard.js?v=controller-fullscreen-1";
+import { initTrackpad } from "./features/trackpad.js?v=controller-fullscreen-1";
+import { initVoice } from "./features/voice.js?v=controller-fullscreen-1";
+import { initModes } from "./ui/modes.js?v=controller-fullscreen-1";
 
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token") || "";
@@ -18,6 +18,8 @@ const elements = {
     voicePanel: document.getElementById("voicePanel"),
     trackpadPanel: document.getElementById("trackpadPanel"),
     controllerPanel: document.getElementById("controllerPanel"),
+    controllerFullscreenButton: document.getElementById("controllerFullscreenButton"),
+    controllerFullscreenLabel: document.getElementById("controllerFullscreenLabel"),
     trackpadPad: document.getElementById("trackpadPad"),
     trackpadScrollBar: document.getElementById("trackpadScrollBar"),
     sensitivitySlider: document.getElementById("sensitivitySlider"),
