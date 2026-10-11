@@ -1,361 +1,561 @@
 .controller-panel {
-            min-height: 360px;
-            overscroll-behavior: none;
-            touch-action: none;
-        }
+  min-height: 360px;
+  overscroll-behavior: none;
+  touch-action: none;
+}
 
-        .controller-viewport {
-            position: relative;
-            width: 100%;
-            height: clamp(220px, calc(100dvh - 140px), 520px);
-            margin-top: 12px;
-            overflow: hidden;
-            container-type: size;
-        }
+.controller-viewport {
+  position: relative;
+  width: 100%;
+  height: clamp(220px, calc(100dvh - 140px), 520px);
+  margin-top: 12px;
+  overflow: hidden;
+  container-type: size;
+}
 
-        .controller-shell {
-            --controller-rotation: 0;
-            --controller-width: 100cqw;
-            --controller-height: 100cqh;
-            --control-size: clamp(22px, min(calc((var(--controller-height) - 64px) / 5), calc((var(--controller-width) - 184px) / 11.5)), 64px);
-            --stick-size: min(180px, calc(3 * var(--control-size) + 20px));
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100cqw;
-            height: 100cqh;
-            padding: 12px;
-            transform: translate(-50%, -50%);
-            display: grid;
-            grid-template-columns: calc(3 * var(--control-size) + 20px) calc(3 * var(--control-size) + 8px) minmax(48px, 1fr) calc(2.5 * var(--control-size)) calc(3 * var(--control-size) + 20px);
-            gap: 12px;
-            align-items: center;
-            min-height: 0;
-            margin: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            touch-action: none;
-        }
+.controller-shell {
+  --controller-rotation: 0;
+  --controller-width: 100cqw;
+  --controller-height: 100cqh;
+  --control-size: clamp(
+    22px,
+    min(
+      calc((var(--controller-height) - 64px) / 5),
+      calc((var(--controller-width) - 184px) / 11.5)
+    ),
+    64px
+  );
+  --stick-size: min(180px, calc(3 * var(--control-size) + 20px));
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100cqw;
+  height: 100cqh;
+  padding: 12px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-columns:
+    calc(3 * var(--control-size) + 20px) calc(3 * var(--control-size) + 8px)
+    minmax(48px, 1fr) calc(2.5 * var(--control-size)) calc(3 * var(--control-size) + 20px);
+  gap: 12px;
+  align-items: center;
+  min-height: 0;
+  margin: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
 
-        .controller-cluster,
-        .controller-center {
-            display: grid;
-            gap: 10px;
-            align-items: center;
-            justify-items: center;
-        }
+.controller-cluster,
+.controller-center {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  justify-items: center;
+}
 
-        .movement-cluster {
-            width: calc(3 * var(--control-size) + 20px);
-            grid-template-columns: 1fr;
-            grid-template-rows: repeat(2, var(--control-size)) calc(3 * var(--control-size) + 20px);
-            justify-self: start;
-        }
+.movement-cluster {
+  width: calc(3 * var(--control-size) + 20px);
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, var(--control-size)) calc(3 * var(--control-size) + 20px);
+  justify-self: start;
+}
 
-        .controller-cluster .shoulder-button {
-            width: calc(1.5 * var(--control-size));
-            height: calc(0.75 * var(--control-size));
-        }
+.controller-cluster .shoulder-button {
+  width: calc(1.5 * var(--control-size));
+  height: calc(0.75 * var(--control-size));
+}
 
-        .action-cluster {
-            grid-template-columns: repeat(3, var(--control-size));
-            grid-template-rows: repeat(5, var(--control-size));
-            justify-content: center;
-            justify-self: end;
-        }
+.action-cluster {
+  grid-template-columns: repeat(3, var(--control-size));
+  grid-template-rows: repeat(5, var(--control-size));
+  justify-content: center;
+  justify-self: end;
+}
 
-        .controller-center {
-            grid-template-columns: 1fr;
-            width: min(100%, 76px);
-            justify-self: center;
-            /* Align with the joystick and the three ABXY rows below the shoulders. */
-            transform: translateY(calc(var(--control-size) + 10px));
-        }
+.controller-center {
+  grid-template-columns: 1fr;
+  width: min(100%, 76px);
+  justify-self: center;
+  /* Align with the joystick and the three ABXY rows below the shoulders. */
+  transform: translateY(calc(var(--control-size) + 10px));
+}
 
-        .controller-button {
-            width: 100%;
-            height: 100%;
-            min-height: 0;
-            margin: 0;
-            border-top-width: 3px;
-            border-bottom-width: 3px;
-            border-top-color: #30343b;
-            border-bottom-color: #090a0c;
-            background: var(--surface-deep);
-            color: var(--text);
-            font-size: 14px;
-            touch-action: none;
-        }
+.controller-button {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  border-top-width: 3px;
+  border-bottom-width: 3px;
+  border-top-color: #30343b;
+  border-bottom-color: #090a0c;
+  background: var(--surface-deep);
+  color: var(--text);
+  font-size: 14px;
+  touch-action: none;
+}
 
-        .controller-button:hover {
-            background: #15171c;
-        }
+.controller-button:hover {
+  background: #15171c;
+}
 
-        .controller-button.pressed {
-            background: var(--accent);
-            border-top-color: var(--button-rim);
-            border-bottom-color: #005e9f;
-            color: var(--heading);
-            transform: translateY(2px);
-        }
+.controller-button.pressed {
+  background: var(--accent);
+  border-top-color: var(--button-rim);
+  border-bottom-color: #005e9f;
+  color: var(--heading);
+  transform: translateY(2px);
+}
 
-        .controller-button .button-label {
-            background: transparent;
-            color: inherit;
-            padding: 0;
-        }
+.controller-button .button-label {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
 
-        .stick-pad {
-            position: relative;
-            grid-column: 1 / -1;
-            width: var(--stick-size);
-            aspect-ratio: 1;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            background: radial-gradient(circle, #15171c 0 34%, var(--surface-deep) 35% 100%);
-            box-shadow: inset 0 0 24px color-mix(in srgb, #000 46%, transparent);
-            touch-action: none;
-        }
+.stick-pad {
+  position: relative;
+  grid-column: 1 / -1;
+  width: var(--stick-size);
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: radial-gradient(circle, #15171c 0 34%, var(--surface-deep) 35% 100%);
+  box-shadow: inset 0 0 24px color-mix(in srgb, #000 46%, transparent);
+  touch-action: none;
+}
 
-        .stick-pad.pressed {
-            border-color: var(--accent);
-            box-shadow: inset 0 0 24px color-mix(in srgb, var(--accent) 24%, transparent);
-        }
+.stick-pad.pressed {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--accent) 24%, transparent);
+}
 
-        .stick-knob {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 44%;
-            aspect-ratio: 1;
-            border: 1px solid #3b4048;
-            border-radius: 999px;
-            background: #20232a;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
+.stick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44%;
+  aspect-ratio: 1;
+  border: 1px solid #3b4048;
+  border-radius: 999px;
+  background: #20232a;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
 
-        .stick-clicked .stick-knob { background: var(--accent); border-color: var(--accent); }
+.stick-clicked .stick-knob {
+  background: var(--accent);
+  border-color: var(--accent);
+}
 
-        .shoulder-button,
-        .system-button,
-        .action-button {
-            border-radius: 8px;
-        }
+.shoulder-button,
+.system-button,
+.action-button {
+  border-radius: 8px;
+}
 
-        .action-cluster .shoulder-button {
-            grid-column: 1 / -1;
-        }
+.action-cluster .shoulder-button {
+  grid-column: 1 / -1;
+}
 
-        .controller-button[data-gamepad-trigger].pressed {
-            background: linear-gradient(to top, var(--accent) 0 var(--trigger-pressure, 0%),
-                var(--surface-deep) var(--trigger-pressure, 0%) 100%);
-        }
+.controller-button[data-gamepad-trigger].pressed {
+  background: linear-gradient(
+    to top,
+    var(--accent) 0 var(--trigger-pressure, 0%),
+    var(--surface-deep) var(--trigger-pressure, 0%) 100%
+  );
+}
 
-        .action-cluster .shoulder-button:first-child {
-            grid-row: 1;
-        }
+.action-cluster .shoulder-button:first-child {
+  grid-row: 1;
+}
 
-        .action-cluster .shoulder-button:nth-child(2) { grid-row: 2; }
+.action-cluster .shoulder-button:nth-child(2) {
+  grid-row: 2;
+}
 
-        .y-button {
-            grid-column: 2;
-            grid-row: 3;
-        }
+.y-button {
+  grid-column: 2;
+  grid-row: 3;
+}
 
-        .x-button {
-            grid-column: 1;
-            grid-row: 4;
-        }
+.x-button {
+  grid-column: 1;
+  grid-row: 4;
+}
 
-        .b-button {
-            grid-column: 3;
-            grid-row: 4;
-        }
+.b-button {
+  grid-column: 3;
+  grid-row: 4;
+}
 
-        .a-button {
-            grid-column: 2;
-            grid-row: 5;
-        }
+.a-button {
+  grid-column: 2;
+  grid-row: 5;
+}
 
-        .system-button {
-            height: 34px;
-            font-size: 12px;
-            border-radius: 8px;
-            color: var(--muted);
-        }
+.system-button {
+  height: 34px;
+  font-size: 12px;
+  border-radius: 8px;
+  color: var(--muted);
+}
 
-        body.controller-fullscreen {
-            width: 100vw;
-            height: 100dvh;
-            padding: 0;
-            overflow: hidden;
-            place-items: stretch;
-        }
+body.controller-fullscreen {
+  width: 100vw;
+  height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+  place-items: stretch;
+}
 
-        body.controller-fullscreen main,
-        body.controller-fullscreen .controls,
-        body.controller-fullscreen .controller-panel {
-            width: 100%;
-            height: 100dvh;
-            min-height: 0;
-        }
+body.controller-fullscreen main,
+body.controller-fullscreen .controls,
+body.controller-fullscreen .controller-panel {
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+}
 
-        body.controller-fullscreen .brand,
-        body.controller-fullscreen .tagline,
-        body.controller-fullscreen #status,
-        body.controller-fullscreen #result {
-            display: none;
-        }
+body.controller-fullscreen .brand,
+body.controller-fullscreen .tagline,
+body.controller-fullscreen #status,
+body.controller-fullscreen #result {
+  display: none;
+}
 
-        body.controller-fullscreen .controller-panel {
-            position: fixed;
-            inset: 0;
-            display: block;
-            padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
-            padding-top: calc(56px + env(safe-area-inset-top));
-            background: var(--background);
-        }
+body.controller-fullscreen .controller-panel {
+  position: fixed;
+  inset: 0;
+  display: block;
+  padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  padding-top: calc(56px + env(safe-area-inset-top));
+  background: var(--background);
+}
 
-        body.controller-fullscreen .workspace-toolbar {
-            position: fixed;
-            top: max(8px, env(safe-area-inset-top));
-            right: max(10px, env(safe-area-inset-right));
-            left: max(10px, env(safe-area-inset-left));
-            z-index: 10;
-            margin: 0;
-        }
+body.controller-fullscreen .workspace-toolbar {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  left: max(10px, env(safe-area-inset-left));
+  z-index: 10;
+  margin: 0;
+}
 
-        body.controller-fullscreen .controller-viewport {
-            height: 100%;
-            min-height: 0;
-            margin: 0;
-        }
+body.controller-fullscreen .controller-viewport {
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+}
 
 @media (orientation: portrait) and (max-width: 720px) {
-    .controller-viewport { height: calc(100dvh - 140px); }
-    .controller-shell {
-        --controller-rotation: 90;
-        --controller-width: 100cqh;
-        --controller-height: 100cqw;
-        width: 100cqh;
-        height: 100cqw;
-        transform: translate(-50%, -50%) rotate(90deg);
-    }
+  .controller-viewport {
+    height: calc(100dvh - 140px);
+  }
+  .controller-shell {
+    --controller-rotation: 90;
+    --controller-width: 100cqh;
+    --controller-height: 100cqw;
+    width: 100cqh;
+    height: 100cqw;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
 }
 
-.controller-toolbar-actions { display: flex; align-items: center; gap: 4px; }
-.controller-edit-button, .hud-editor-button {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    width: auto; height: 36px; margin: 0; padding: 6px 10px;
-    border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 12px;
+.controller-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.controller-edit-button:hover, .hud-editor-button:hover { background: var(--surface); color: var(--heading); }
-.controller-edit-button[aria-pressed="true"] { color: var(--accent); }
-.controller-edit-button { width: 36px; padding: 0; }
+.controller-edit-button,
+.hud-editor-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  height: 36px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+.controller-edit-button:hover,
+.hud-editor-button:hover {
+  background: var(--surface);
+  color: var(--heading);
+}
+.controller-edit-button[aria-pressed='true'] {
+  color: var(--accent);
+}
+.controller-edit-button {
+  width: 36px;
+  padding: 0;
+}
 .hud-editor-toolbar {
-    display: flex; align-items: center; gap: 12px; height: 56px;
-    border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
 }
-.hud-editor-toolbar label { margin: 0; gap: 8px; font-size: 12px; }
-.hud-control-picker select { width: 90px; height: 34px; padding: 4px; appearance: auto; }
-.hud-size-picker { flex: 1; }
-.hud-size-picker input { width: min(100%, 140px); min-width: 40px; accent-color: var(--accent); }
-.hud-size-picker output { min-width: 4ch; }
-.controller-panel[data-editing="true"] .controller-viewport { height: clamp(180px, calc(100dvh - 196px), 464px); }
-.controller-panel[data-editing="true"] .controller-shell { --control-size: clamp(20px, min(calc((var(--controller-height) - 64px) / 5), calc((var(--controller-width) - 184px) / 11.5)), 64px); }
-body.controller-fullscreen .controller-panel[data-editing="true"] .controller-viewport { height: calc(100% - 56px); }
-.controller-shell[data-custom-layout="true"] { display: block; }
-.controller-shell[data-custom-layout="true"] .controller-cluster,
-.controller-shell[data-custom-layout="true"] .controller-center { display: contents; }
-.controller-shell[data-custom-layout="true"] [data-hud-id] {
-    --hud-width: calc(var(--control-size) * var(--hud-scale));
-    --hud-height: calc(var(--control-size) * var(--hud-scale));
-    --hud-w: min(var(--hud-width), calc(var(--controller-width) - 24px));
-    --hud-h: min(var(--hud-height), calc(var(--controller-height) - 24px));
-    position: absolute; width: var(--hud-w); height: var(--hud-h);
-    left: clamp(calc(var(--hud-w) / 2 + 12px), var(--hud-x), calc(100% - var(--hud-w) / 2 - 12px));
-    top: clamp(calc(var(--hud-h) / 2 + 12px), var(--hud-y), calc(100% - var(--hud-h) / 2 - 12px));
-    transform: translate(-50%, -50%);
+.hud-editor-toolbar label {
+  margin: 0;
+  gap: 8px;
+  font-size: 12px;
 }
-.controller-shell[data-custom-layout="true"] .shoulder-button {
-    --hud-width: calc(1.5 * var(--control-size) * var(--hud-scale));
-    --hud-height: calc(0.75 * var(--control-size) * var(--hud-scale));
+.hud-control-picker select {
+  width: 90px;
+  height: 34px;
+  padding: 4px;
+  appearance: auto;
 }
-.controller-shell[data-custom-layout="true"] .system-button {
-    --hud-width: calc(76px * var(--hud-scale));
-    --hud-height: calc(34px * var(--hud-scale));
+.hud-size-picker {
+  flex: 1;
 }
-.controller-shell[data-custom-layout="true"] .stick-pad {
-    --hud-width: min(calc(var(--stick-size) * var(--hud-scale)), calc(var(--controller-height) - 24px), calc(var(--controller-width) - 24px));
-    --hud-height: var(--hud-width);
+.hud-size-picker input {
+  width: min(100%, 140px);
+  min-width: 40px;
+  accent-color: var(--accent);
+}
+.hud-size-picker output {
+  min-width: 4ch;
+}
+.controller-panel[data-editing='true'] .controller-viewport {
+  height: clamp(180px, calc(100dvh - 196px), 464px);
+}
+.controller-panel[data-editing='true'] .controller-shell {
+  --control-size: clamp(
+    20px,
+    min(
+      calc((var(--controller-height) - 64px) / 5),
+      calc((var(--controller-width) - 184px) / 11.5)
+    ),
+    64px
+  );
+}
+body.controller-fullscreen .controller-panel[data-editing='true'] .controller-viewport {
+  height: calc(100% - 56px);
+}
+.controller-shell[data-custom-layout='true'] {
+  display: block;
+}
+.controller-shell[data-custom-layout='true'] .controller-cluster,
+.controller-shell[data-custom-layout='true'] .controller-center {
+  display: contents;
+}
+.controller-shell[data-custom-layout='true'] [data-hud-id] {
+  --hud-width: calc(var(--control-size) * var(--hud-scale));
+  --hud-height: calc(var(--control-size) * var(--hud-scale));
+  --hud-w: min(var(--hud-width), calc(var(--controller-width) - 24px));
+  --hud-h: min(var(--hud-height), calc(var(--controller-height) - 24px));
+  position: absolute;
+  width: var(--hud-w);
+  height: var(--hud-h);
+  left: clamp(calc(var(--hud-w) / 2 + 12px), var(--hud-x), calc(100% - var(--hud-w) / 2 - 12px));
+  top: clamp(calc(var(--hud-h) / 2 + 12px), var(--hud-y), calc(100% - var(--hud-h) / 2 - 12px));
+  transform: translate(-50%, -50%);
+}
+.controller-shell[data-custom-layout='true'] .shoulder-button {
+  --hud-width: calc(1.5 * var(--control-size) * var(--hud-scale));
+  --hud-height: calc(0.75 * var(--control-size) * var(--hud-scale));
+}
+.controller-shell[data-custom-layout='true'] .system-button {
+  --hud-width: calc(76px * var(--hud-scale));
+  --hud-height: calc(34px * var(--hud-scale));
+}
+.controller-shell[data-custom-layout='true'] .stick-pad {
+  --hud-width: min(
+    calc(var(--stick-size) * var(--hud-scale)),
+    calc(var(--controller-height) - 24px),
+    calc(var(--controller-width) - 24px)
+  );
+  --hud-height: var(--hud-width);
 }
 .controller-dpad {
-    grid-column: 2; grid-row: 1;
-    width: calc(3 * var(--control-size) + 8px); aspect-ratio: 1;
-    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 3px;
-    transform: translateY(calc(var(--control-size) + 10px));
+  grid-column: 2;
+  grid-row: 1;
+  width: calc(3 * var(--control-size) + 8px);
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  transform: translateY(calc(var(--control-size) + 10px));
 }
-.dpad-button { border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 0; }
-.dpad-up { grid-column: 2; grid-row: 1; }
-.dpad-left { grid-column: 1; grid-row: 2; }
-.dpad-right { grid-column: 3; grid-row: 2; }
-.dpad-down { grid-column: 2; grid-row: 3; }
-.movement-cluster { grid-column: 1; grid-row: 1; }
-.controller-center { grid-column: 3; grid-row: 1; }
+.dpad-button {
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.dpad-up {
+  grid-column: 2;
+  grid-row: 1;
+}
+.dpad-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+.dpad-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+.dpad-down {
+  grid-column: 2;
+  grid-row: 3;
+}
+.movement-cluster {
+  grid-column: 1;
+  grid-row: 1;
+}
+.controller-center {
+  grid-column: 3;
+  grid-row: 1;
+}
 .right-stick {
-    grid-column: 4; grid-row: 1; justify-self: center;
-    width: calc(2.5 * var(--control-size)); transform: translateY(calc(var(--control-size) + 10px));
+  grid-column: 4;
+  grid-row: 1;
+  justify-self: center;
+  width: calc(2.5 * var(--control-size));
+  transform: translateY(calc(var(--control-size) + 10px));
 }
-.action-cluster { grid-column: 5; grid-row: 1; }
-.controller-shell[data-custom-layout="true"] .right-stick {
-    --hud-width: min(calc(2.5 * var(--control-size) * var(--hud-scale)), calc(var(--controller-height) - 24px));
+.action-cluster {
+  grid-column: 5;
+  grid-row: 1;
 }
-.controller-shell[data-custom-layout="true"] .controller-dpad {
-    --hud-width: calc((3 * var(--control-size) + 8px) * var(--hud-scale));
-    --hud-height: var(--hud-width);
+.controller-shell[data-custom-layout='true'] .right-stick {
+  --hud-width: min(
+    calc(2.5 * var(--control-size) * var(--hud-scale)),
+    calc(var(--controller-height) - 24px)
+  );
+}
+.controller-shell[data-custom-layout='true'] .controller-dpad {
+  --hud-width: calc((3 * var(--control-size) + 8px) * var(--hud-scale));
+  --hud-height: var(--hud-width);
 }
 .stick-click-button {
-    position: absolute; top: 26%; width: 44px; height: 34px;
-    transform: translate(-50%, -50%); border-radius: 8px; font-size: 12px;
+  position: absolute;
+  top: 26%;
+  width: 44px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+  border-radius: 8px;
+  font-size: 12px;
 }
-.l3-button { left: 34%; }
-.r3-button { left: 67%; }
-.stick-click-button.pressed { transform: translate(-50%, calc(-50% + 2px)); }
-.controller-shell[data-custom-layout="true"] .stick-click-button {
-    --hud-width: calc(44px * var(--hud-scale)); --hud-height: calc(34px * var(--hud-scale));
+.l3-button {
+  left: 34%;
 }
-.controller-panel [hidden] { display: none !important; }
-.controller-options { position: relative; }
+.r3-button {
+  left: 67%;
+}
+.stick-click-button.pressed {
+  transform: translate(-50%, calc(-50% + 2px));
+}
+.controller-shell[data-custom-layout='true'] .stick-click-button {
+  --hud-width: calc(44px * var(--hud-scale));
+  --hud-height: calc(34px * var(--hud-scale));
+}
+.controller-panel [hidden] {
+  display: none !important;
+}
+.controller-options {
+  position: relative;
+}
 .controller-options-popover {
-    position: absolute; right: 0; top: calc(100% + 8px); z-index: 20;
-    width: 180px; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--surface-deep); box-shadow: 0 8px 24px #0006;
-    display: grid; gap: 10px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  width: 180px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+  box-shadow: 0 8px 24px #0006;
+  display: grid;
+  gap: 10px;
 }
-.controller-options-popover label { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; }
-.controller-options-popover input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
-.controller-panel[data-editing="true"] [data-hud-id] { cursor: grab; outline: 1px dashed var(--subtle); outline-offset: 2px; }
-.controller-panel[data-editing="true"] [data-selected="true"] { outline: 2px solid var(--accent); z-index: 2; }
-.controller-panel[data-editing="true"] [data-hud-id]:active { cursor: grabbing; }
+.controller-options-popover label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+}
+.controller-options-popover input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.controller-panel[data-editing='true'] [data-hud-id] {
+  cursor: grab;
+  outline: 1px dashed var(--subtle);
+  outline-offset: 2px;
+}
+.controller-panel[data-editing='true'] [data-selected='true'] {
+  outline: 2px solid var(--accent);
+  z-index: 2;
+}
+.controller-panel[data-editing='true'] [data-hud-id]:active {
+  cursor: grabbing;
+}
 @media (max-width: 540px) {
-    .controller-edit-button { width: 30px; padding: 0; }
-    .workspace-toolbar { gap: 4px; }
-    .hud-editor-toolbar { gap: 4px; }
-    .hud-editor-toolbar label { gap: 4px; }
-    .hud-control-picker { font-size: 0 !important; }
-    .hud-control-picker select { width: 72px; font-size: 12px; }
-    .hud-editor-button { padding-inline: 6px; }
-    .hud-size-picker input { width: 50px; }
+  .controller-edit-button {
+    width: 30px;
+    padding: 0;
+  }
+  .workspace-toolbar {
+    gap: 4px;
+  }
+  .hud-editor-toolbar {
+    gap: 4px;
+  }
+  .hud-editor-toolbar label {
+    gap: 4px;
+  }
+  .hud-control-picker {
+    font-size: 0 !important;
+  }
+  .hud-control-picker select {
+    width: 72px;
+    font-size: 12px;
+  }
+  .hud-editor-button {
+    padding-inline: 6px;
+  }
+  .hud-size-picker input {
+    width: 50px;
+  }
 }
 @media (max-width: 380px) {
-    .hud-control-picker select { width: 60px; }
-    .hud-size-picker { font-size: 0 !important; }
-    .hud-size-picker output { font-size: 10px; }
-    .hud-size-picker input { width: 40px; }
-    .hud-editor-button { font-size: 11px; padding-inline: 4px; }
+  .hud-control-picker select {
+    width: 60px;
+  }
+  .hud-size-picker {
+    font-size: 0 !important;
+  }
+  .hud-size-picker output {
+    font-size: 10px;
+  }
+  .hud-size-picker input {
+    width: 40px;
+  }
+  .hud-editor-button {
+    font-size: 11px;
+    padding-inline: 4px;
+  }
 }
 @media (orientation: portrait) and (max-width: 720px) {
-    .controller-panel[data-editing="true"] .controller-viewport { height: calc(100dvh - 196px); }
+  .controller-panel[data-editing='true'] .controller-viewport {
+    height: calc(100dvh - 196px);
+  }
 }

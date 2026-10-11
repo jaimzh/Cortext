@@ -2,8 +2,40 @@ import { Mouse, Keyboard, Microphone, GameController } from '@phosphor-icons/rea
 
 // Edit these entries to write the feature guide in your own voice.
 export const features = [
-  { id: 'mouse', icon: Mouse, title: 'Mouse & touchpad', intro: 'A place to point, click, scroll, and zoom.', details: 'Move the cursor with one finger, use the left and right mouse buttons, and scroll with the side strip. Adjust sensitivity and resize the touchpad to make room for the input panel.', note: 'Zoom controls send Ctrl + or Ctrl − shortcuts; the application on your computer decides how to interpret them.' },
-  { id: 'keyboard', icon: Keyboard, title: 'Keyboard', intro: 'Type a thought. Or send it as it happens.', details: 'Compose text before sending it, or switch to live keyboard input over WebSocket. Both modes share shortcuts, arrow keys, a space key, and the More keys panel.', note: 'Live input needs an active connection to your local server.' },
-  { id: 'voice', icon: Microphone, title: 'Voice', intro: 'Speak, transcribe, and keep the words in view.', details: 'Record from your phone, choose a transcription model, and review the returned text. Turn automatic pasting on or off depending on what you want to do with the result.', note: 'Microphone access requires HTTPS on your phone. Models run through the Python backend.' },
-  { id: 'controller', icon: GameController, title: 'Controller', intro: 'A gamepad layout you can make your own.', details: 'Use analog sticks, triggers, shoulder buttons, a D-pad, face buttons, and Start / Select. Double-tap a stick for L3 or R3, or enable separate buttons. Move and resize controls with the layout editor, and hide controls you do not need.', note: 'The virtual Xbox controller uses vgamepad / ViGEmBus on Windows. Haptic feedback depends on your phone and browser.' },
+  {
+    id: 'mouse',
+    icon: Mouse,
+    title: 'Mouse & touchpad',
+    intro: 'A place to point, click, scroll, and zoom.',
+    details:
+      'Move the cursor with one finger, use the left and right mouse buttons, and scroll with the side strip. Adjust sensitivity and resize the touchpad to make room for the input panel.',
+    note: 'Zoom controls send Ctrl + or Ctrl − shortcuts; the application on your computer decides how to interpret them.',
+  },
+  {
+    id: 'keyboard',
+    icon: Keyboard,
+    title: 'Keyboard',
+    intro: 'Type a thought. Or send it as it happens.',
+    details:
+      'Compose text before sending it, or switch to live keyboard input over WebSocket. Both modes share shortcuts, arrow keys, a space key, and the More keys panel.',
+    note: 'Live input needs an active connection to your local server.',
+  },
+  {
+    id: 'voice',
+    icon: Microphone,
+    title: 'Voice',
+    intro: 'Speak, transcribe, and keep the words in view.',
+    details:
+      'Record from your phone, choose a transcription model, and review the returned text. Turn automatic pasting on or off depending on what you want to do with the result.',
+    note: 'Microphone access requires HTTPS on your phone. Models run through the Python backend.',
+  },
+  {
+    id: 'controller',
+    icon: GameController,
+    title: 'Controller',
+    intro: 'A gamepad layout you can make your own.',
+    details:
+      'Use analog sticks, triggers, shoulder buttons, a D-pad, face buttons, and Start / Select. Double-tap a stick for L3 or R3, or enable separate buttons. Move and resize controls with the layout editor, and hide controls you do not need.',
+    note: 'The virtual Xbox controller uses vgamepad / ViGEmBus on Windows. Haptic feedback depends on your phone and browser.',
+  },
 ];

@@ -115,7 +115,7 @@ class HomeScreen(Screen):
         yield Container(
             Vertical(
                 Static(figlet_format("CORTEXT", font="big"), id="brand"),
-                Static("Your voice, anywhere.", id="tagline"),
+                Static("Control your computer from your phone.", id="tagline"),
                 Horizontal(
                     Button("New Session", id="new-session", variant="primary"),
                     id="actions",
@@ -325,7 +325,6 @@ class QrScreen(Screen):
             connection_status = self.query_one("#connection-status", Static)
             connection_status.update("Phone connected")
             connection_status.add_class("connected")
-            # Later, this is where we can move into an ActiveSessionScreen.
             return
 
         connection_status = self.query_one("#connection-status", Static)

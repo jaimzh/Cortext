@@ -5,7 +5,9 @@ import { createDemoApi } from './createDemoApi.js';
 
 test('real keyboard API calls reach the laptop simulation', async () => {
   let state = initialDemoState();
-  const api = createDemoApi(event => { state = applyDemoInput(state, event); });
+  const api = createDemoApi((event) => {
+    state = applyDemoInput(state, event);
+  });
   await api.sendKeyboardText('Hello');
   api.sendLiveKeyboardInput({ delete: 2, text: 'p!' });
   assert.equal(state.text, 'Help!');
@@ -51,8 +53,12 @@ test('demo transport reports a connected keyboard and virtual gamepad', () => {
   const api = createDemoApi(() => {});
   let connected = false;
   let message;
-  api.onInputConnection(value => { connected = value; });
-  api.onControllerMessage(value => { message = value; });
+  api.onInputConnection((value) => {
+    connected = value;
+  });
+  api.onControllerMessage((value) => {
+    message = value;
+  });
   api.sendControllerEvent({ type: 'gamepad.connect' });
   assert.equal(connected, true);
   assert.equal(message.type, 'gamepad.status');

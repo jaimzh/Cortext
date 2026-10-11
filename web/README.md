@@ -48,7 +48,7 @@ Voice and controller unmount when their views close, releasing the microphone or
 held gamepad controls. Gesture engines attach to component refs through hooks;
 high-frequency movement does not trigger React rendering.
 
-Drag the horizontal divider above the ribbon to resize the touchpad (180–640px).
+Drag the horizontal divider above the ribbon to resize the touchpad (120–640px).
 The touch scroll strip follows the same height. The divider uses dnd-kit React;
 resizing is restricted to the handle, so touchpad gestures remain independent.
 Focus the divider and use Up/Down (Shift for larger steps), Home/End for limits,

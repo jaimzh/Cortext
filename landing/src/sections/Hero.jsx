@@ -1,5 +1,5 @@
-import { Link } from "react-router";
-import { ArrowRight, ArrowUpRight } from "@phosphor-icons/react";
+import { Link } from 'react-router';
+import { ArrowRight, ArrowUpRight } from '@phosphor-icons/react';
 import AsciiWordmark from '../components/AsciiWordmark.jsx';
 import Button from '../components/Button.jsx';
 import { tagline } from '../content/brand.js';
@@ -12,8 +12,7 @@ export default function Hero() {
       <div className="hero-bottom">
         <p>
           A touchpad, keyboard, microphone, and controller.
-          <br className="desktop-break" /> Cortext puts them all on the screen
-          already in your hand.
+          <br className="desktop-break" /> Cortext puts them all on the screen already in your hand.
         </p>
         <div className="hero-actions">
           <Button to="/docs/">
@@ -24,6 +23,6 @@ export default function Hero() {
           </Link>
         </div>
       </div>
-      </section>
+    </section>
   );
 }

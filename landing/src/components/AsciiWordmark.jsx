@@ -1,5 +1,5 @@
-import { AsciiText } from "./ui/AsciiText.jsx";
-import "./AsciiWordmark.css";
+import { AsciiText } from './ui/AsciiText.jsx';
+import './AsciiWordmark.css';
 
 export default function AsciiWordmark() {
   return (

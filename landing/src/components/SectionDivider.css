@@ -14,5 +14,7 @@
 }
 
 @media (max-width: 760px) {
-  .section-divider.container { margin-block: 36px; }
+  .section-divider.container {
+    margin-block: 36px;
+  }
 }

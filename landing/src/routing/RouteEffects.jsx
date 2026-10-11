@@ -4,15 +4,18 @@ import { useLocation } from 'react-router';
 const metadata = {
   '/': {
     title: 'Cortext — Your phone, at the cursor.',
-    description: 'Cortext turns your phone into a touchpad, keyboard, microphone, and game controller for your computer. Explore the project and learn how to set it up.',
+    description:
+      'Cortext turns your phone into a touchpad, keyboard, microphone, and game controller for your computer. Explore the project and learn how to set it up.',
   },
   '/docs': {
     title: 'Setup — Cortext Docs',
-    description: 'Set up Cortext on your computer and connect your phone to the local control interface.',
+    description:
+      'Set up Cortext on your computer and connect your phone to the local control interface.',
   },
   '/field-notes': {
     title: 'Field notes — Cortext',
-    description: 'A field guide to Cortext: mouse, keyboard, voice, controller, and the details behind each feature.',
+    description:
+      'A field guide to Cortext: mouse, keyboard, voice, controller, and the details behind each feature.',
   },
 };
 
@@ -31,7 +34,11 @@ export default function RouteEffects() {
 
     const frame = requestAnimationFrame(() => {
       let id = hash.slice(1);
-      try { id = decodeURIComponent(id); } catch { /* Keep malformed fragments harmless. */ }
+      try {
+        id = decodeURIComponent(id);
+      } catch {
+        /* Keep malformed fragments harmless. */
+      }
       const section = id ? document.getElementById(id) : null;
       if (section) section.scrollIntoView();
       else window.scrollTo({ top: 0, left: 0, behavior: 'instant' });

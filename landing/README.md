@@ -30,12 +30,14 @@ npm.cmd run preview
 - `src/content/features.js`: feature titles, descriptions, and observations.
 - `src/pages/`: landing page, setup docs, and field notes.
 - `src/sections/`: Hero, Showcase, Features, HowItWorks, FAQ, and CallToAction.
-  `Home.jsx` composes these sections in page order.
+  `Home.jsx` composes the main sections; `ClosingSection.jsx` combines the closing
+  call to action and footer over a full-width LetterGlitch background.
 - `src/App.jsx`: route definitions and the shared navigation/footer.
 - `src/routing/RouteEffects.jsx`: section scrolling and page metadata after navigation.
 - `src/components/`: shared navigation, footer, code blocks, Button, and AsciiWordmark.
-  Button matches the web recording control; AsciiWordmark reuses the TUI's
-  pyfiglet wordmark in the solid Cortext accent blue.
+  Button matches the web recording control; AsciiWordmark uses the reusable
+  animated ASCII text component in the Cortext accent blue. `components/ui/`
+  contains the adapted Nyx UI AsciiText and React Bits LetterGlitch effects.
 - `src/content/brand.js`: ASCII branding and the tagline, "Control your computer from your phone."
 - `src/styles/theme.css`: brand tokens matching the control app.
 - `src/styles/landing.css`: website layout and responsive styles.

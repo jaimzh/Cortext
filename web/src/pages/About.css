@@ -1,5 +1,27 @@
-.about-brand { padding: 12px 0 20px; margin-bottom: 24px; border-bottom: 1px solid var(--border); text-align: center; }
-.about-page .about-brand h1 { margin: 12px 0 18px; color: var(--accent); }
-.about-brand pre { display: inline-block; margin: 0; font: clamp(8px, 1.7vw, 16px)/1.15 monospace; white-space: pre; text-align: left; }
-.about-page .about-tagline { margin: 0 auto; color: var(--muted); font-size: 13px; }
-.about-section-title { margin: 28px 0 12px; color: var(--accent); font: 13px/1.5 monospace; }
+.about-brand {
+  padding: 12px 0 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.about-page .about-brand h1 {
+  margin: 12px 0 18px;
+  color: var(--accent);
+}
+.about-brand pre {
+  display: inline-block;
+  margin: 0;
+  font: clamp(8px, 1.7vw, 16px)/1.15 monospace;
+  white-space: pre;
+  text-align: left;
+}
+.about-page .about-tagline {
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+.about-section-title {
+  margin: 28px 0 12px;
+  color: var(--accent);
+  font: 13px/1.5 monospace;
+}

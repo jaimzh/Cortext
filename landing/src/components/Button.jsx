@@ -6,8 +6,16 @@ export default function Button({ to, children, className = '', type = 'button', 
   const label = <span className="cortext-button-label">{children}</span>;
 
   if (to) {
-    return <Link to={to} className={classes} {...props}>{label}</Link>;
+    return (
+      <Link to={to} className={classes} {...props}>
+        {label}
+      </Link>
+    );
   }
 
-  return <button type={type} className={classes} {...props}>{label}</button>;
+  return (
+    <button type={type} className={classes} {...props}>
+      {label}
+    </button>
+  );
 }

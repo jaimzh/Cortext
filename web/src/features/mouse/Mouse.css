@@ -1,215 +1,345 @@
-#trackpadPanel { min-width: 0; }
+#trackpadPanel {
+  min-width: 0;
+}
 .trackpad-wrap {
-            --slider-width: 42px;
-            display: grid;
-            grid-template-columns: var(--slider-width) minmax(0, 1fr) var(--slider-width);
-            gap: 10px;
-            align-items: stretch;
-            margin-top: 20px;
-        }
+  --slider-width: 42px;
+  display: grid;
+  grid-template-columns: var(--slider-width) minmax(0, 1fr) var(--slider-width);
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 20px;
+}
 
-        .trackpad-pad {
-            width: 100%;
-            height: var(--mouse-height, 320px);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface-deep);
-            display: grid;
-            place-items: center;
-            overflow: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            touch-action: none;
-        }
+.trackpad-pad {
+  width: 100%;
+  height: var(--mouse-height, 320px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
 
-        .trackpad-pad.active {
-            border-color: var(--accent);
-            box-shadow: inset 0 0 24px color-mix(in srgb, var(--accent) 18%, transparent);
-        }
+.trackpad-pad.active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--accent) 18%, transparent);
+}
 
-        .trackpad-pad.dragging {
-            border-color: var(--button-rim);
-        }
+.trackpad-pad.dragging {
+  border-color: var(--button-rim);
+}
 
-        .trackpad-scroll-bar {
-            position: relative;
-            min-height: var(--mouse-height, 320px);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface-deep);
-            overflow: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            touch-action: none;
-        }
+.trackpad-scroll-bar {
+  position: relative;
+  min-height: var(--mouse-height, 320px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
 
-        .trackpad-scroll-bar.active {
-            border-color: var(--accent);
-            box-shadow: inset 0 0 18px color-mix(in srgb, var(--accent) 20%, transparent);
-        }
+.trackpad-scroll-bar.active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 18px color-mix(in srgb, var(--accent) 20%, transparent);
+}
 
-        .trackpad-scroll-bar::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 64%;
-            border-radius: 999px;
-            background: #30343b;
-            transform: translate(-50%, -50%);
-        }
+.trackpad-scroll-bar::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 64%;
+  border-radius: 999px;
+  background: #30343b;
+  transform: translate(-50%, -50%);
+}
 
-        .scroll-thumb {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 18px;
-            height: 58px;
-            border: 1px solid #3b4048;
-            border-radius: 999px;
-            background: #15171c;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
+.scroll-thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 58px;
+  border: 1px solid #3b4048;
+  border-radius: 999px;
+  background: #15171c;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
 
-        .scroll-edge {
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 22%;
-            pointer-events: none;
-        }
+.scroll-edge {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 22%;
+  pointer-events: none;
+}
 
-        .scroll-edge.top {
-            top: 0;
-            border-bottom: 1px solid #20232a;
-        }
+.scroll-edge.top {
+  top: 0;
+  border-bottom: 1px solid #20232a;
+}
 
-        .scroll-edge.bottom {
-            bottom: 0;
-            border-top: 1px solid #20232a;
-        }
+.scroll-edge.bottom {
+  bottom: 0;
+  border-top: 1px solid #20232a;
+}
 
-        .trackpad-hint {
-            padding: 0 24px;
-            color: var(--subtle);
-            font-size: 12px;
-            line-height: 1.6;
-            text-align: center;
-            pointer-events: none;
-        }
+.trackpad-hint {
+  padding: 0 24px;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+  pointer-events: none;
+}
 
-        .trackpad-actions {
-            position: relative;
-            display: grid;
-            grid-template-columns: 42px minmax(0, 1fr) 42px;
-            gap: 8px;
-            margin-top: 12px;
-        }
+.trackpad-actions {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  gap: 8px;
+  margin-top: 12px;
+}
 
-        .trackpad-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
+.trackpad-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
 
-        .trackpad-settings {
-            color: var(--text);
-            font-size: 14px;
-        }
+.trackpad-settings {
+  color: var(--text);
+  font-size: 14px;
+}
 
-        .trackpad-settings-button {
-            display: grid; place-items: center; width: 42px; height: 42px;
-            margin: 0; padding: 0; border: 0; border-radius: 6px;
-            background: transparent; color: var(--muted);
-        }
+.trackpad-settings-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
 
-        .trackpad-settings-button:hover { background: var(--surface); color: var(--heading); }
-        .trackpad-settings-button[aria-expanded="true"] { color: var(--accent); }
-        .trackpad-settings-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-        .trackpad-settings-popover {
-            position: absolute; right: 0; top: calc(100% + 8px); z-index: 10;
-            width: min(100%, 320px); padding: 16px; border: 1px solid var(--border);
-            border-radius: 8px; background: var(--surface-deep);
-            box-shadow: 0 8px 24px #0006;
-        }
-        .trackpad-settings-popover label { margin: 0; }
-        .trackpad-settings-popover output { margin-left: auto; }
+.trackpad-settings-button:hover {
+  background: var(--surface);
+  color: var(--heading);
+}
+.trackpad-settings-button[aria-expanded='true'] {
+  color: var(--accent);
+}
+.trackpad-settings-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.trackpad-settings-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 10;
+  width: min(100%, 320px);
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+  box-shadow: 0 8px 24px #0006;
+}
+.trackpad-settings-popover label {
+  margin: 0;
+}
+.trackpad-settings-popover output {
+  margin-left: auto;
+}
 
-        .trackpad-settings output {
-            color: var(--muted);
-            font-size: 12px;
-        }
+.trackpad-settings output {
+  color: var(--muted);
+  font-size: 12px;
+}
 
-        .trackpad-settings input[type="range"] {
-            width: 100%;
-            margin: 8px 0 0;
-            accent-color: var(--accent);
-        }
+.trackpad-settings input[type='range'] {
+  width: 100%;
+  margin: 8px 0 0;
+  accent-color: var(--accent);
+}
 
 @media (max-width: 420px) {
-    .trackpad-wrap { --slider-width: 36px; gap: 8px; }
-    .trackpad-actions { grid-template-columns: 36px minmax(0, 1fr) 42px; }
-    .trackpad-sliders-button { width: 36px; }
+  .trackpad-wrap {
+    --slider-width: 36px;
+    gap: 8px;
+  }
+  .trackpad-actions {
+    grid-template-columns: 36px minmax(0, 1fr) 42px;
+  }
+  .trackpad-sliders-button {
+    width: 36px;
+  }
 }
 
-.trackpad-wrap[data-zoom="false"][data-scroll="true"] { grid-template-columns: minmax(0, 1fr) var(--slider-width); }
-.trackpad-wrap[data-zoom="true"][data-scroll="false"] { grid-template-columns: var(--slider-width) minmax(0, 1fr); }
-.trackpad-wrap[data-zoom="false"][data-scroll="false"] { grid-template-columns: minmax(0, 1fr); }
-.trackpad-zoom-bar[hidden], .trackpad-scroll-bar[hidden], .trackpad-sliders-popover[hidden] { display: none; }
-.trackpad-sliders-button {
-    display: grid; place-items: center; width: 100%; height: 42px; margin: 0; padding: 0;
-    border: 0; border-radius: 6px; background: transparent; color: var(--muted);
+.trackpad-wrap[data-zoom='false'][data-scroll='true'] {
+  grid-template-columns: minmax(0, 1fr) var(--slider-width);
 }
-.trackpad-sliders-button:hover { background: var(--surface); color: var(--heading); }
-.trackpad-sliders-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.trackpad-sliders-button[aria-expanded="true"] { color: var(--accent); }
-.trackpad-sliders-button[aria-expanded="true"] svg { transform: rotate(180deg); }
+.trackpad-wrap[data-zoom='true'][data-scroll='false'] {
+  grid-template-columns: var(--slider-width) minmax(0, 1fr);
+}
+.trackpad-wrap[data-zoom='false'][data-scroll='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.trackpad-zoom-bar[hidden],
+.trackpad-scroll-bar[hidden],
+.trackpad-sliders-popover[hidden] {
+  display: none;
+}
+.trackpad-sliders-button {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
+.trackpad-sliders-button:hover {
+  background: var(--surface);
+  color: var(--heading);
+}
+.trackpad-sliders-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.trackpad-sliders-button[aria-expanded='true'] {
+  color: var(--accent);
+}
+.trackpad-sliders-button[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
 .trackpad-sliders-popover {
-    position: absolute; left: 0; top: calc(100% + 8px); z-index: 10;
-    width: min(100%, 200px); padding: 8px; border: 1px solid var(--border);
-    border-radius: 8px; background: var(--surface-deep); box-shadow: 0 8px 24px #0006;
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  z-index: 10;
+  width: min(100%, 200px);
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+  box-shadow: 0 8px 24px #0006;
 }
 .trackpad-sliders-popover label {
-    display: flex; align-items: center; justify-content: flex-start; gap: 10px;
-    margin: 0; padding: 8px; font-size: 12px; color: var(--text); cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 8px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
 }
-.trackpad-sliders-popover input[type="checkbox"] {
-    width: 16px; height: 16px; margin: 0; flex: 0 0 16px; accent-color: var(--accent);
+.trackpad-sliders-popover input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 16px;
+  accent-color: var(--accent);
 }
 
 .trackpad-zoom-bar {
-    position: relative; min-height: var(--mouse-height, 320px);
-    border: 1px solid var(--border); border-radius: 8px; background: var(--surface-deep);
-    color: var(--muted); user-select: none; touch-action: none;
+  position: relative;
+  min-height: var(--mouse-height, 320px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+  color: var(--muted);
+  user-select: none;
+  touch-action: none;
 }
-.trackpad-zoom-bar:has(input:focus-visible), .trackpad-zoom-bar:has(input:active) { border-color: var(--accent); }
+.trackpad-zoom-bar:has(input:focus-visible),
+.trackpad-zoom-bar:has(input:active) {
+  border-color: var(--accent);
+}
 .trackpad-zoom-button {
-    position: absolute; left: 0; display: grid; place-items: center;
-    width: 100%; height: 36px; margin: 0; padding: 0; border: 0;
-    border-radius: 6px; background: transparent; color: var(--muted);
+  position: absolute;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
 }
-.trackpad-zoom-button svg { pointer-events: none; }
-.trackpad-zoom-button:hover { background: var(--surface); color: var(--accent); }
-.trackpad-zoom-button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.zoom-in-button { top: 0; }
-.zoom-out-button { bottom: 0; }
-.trackpad-zoom-bar input[type="range"] {
-    appearance: none; -webkit-appearance: none; writing-mode: vertical-lr; direction: rtl;
-    position: absolute; top: 36px; left: 0; width: 100%; height: calc(100% - 72px);
-    margin: 0; padding: 0; border: 0; border-radius: 0; outline: none; cursor: ns-resize;
-    background: linear-gradient(#30343b, #30343b) center / 5px 100% no-repeat;
-    touch-action: none;
+.trackpad-zoom-button svg {
+  pointer-events: none;
+}
+.trackpad-zoom-button:hover {
+  background: var(--surface);
+  color: var(--accent);
+}
+.trackpad-zoom-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.zoom-in-button {
+  top: 0;
+}
+.zoom-out-button {
+  bottom: 0;
+}
+.trackpad-zoom-bar input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 72px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  cursor: ns-resize;
+  background: linear-gradient(#30343b, #30343b) center / 5px 100% no-repeat;
+  touch-action: none;
 }
 .trackpad-zoom-bar input::-webkit-slider-thumb {
-    appearance: none; width: 18px; height: 42px; border: 1px solid #3b4048;
-    border-radius: 999px; background: #15171c;
+  appearance: none;
+  width: 18px;
+  height: 42px;
+  border: 1px solid #3b4048;
+  border-radius: 999px;
+  background: #15171c;
 }
 .trackpad-zoom-bar input::-moz-range-thumb {
-    width: 18px; height: 42px; border: 1px solid #3b4048;
-    border-radius: 999px; background: #15171c;
+  width: 18px;
+  height: 42px;
+  border: 1px solid #3b4048;
+  border-radius: 999px;
+  background: #15171c;
 }
-.trackpad-zoom-bar input::-moz-range-track { background: transparent; }
+.trackpad-zoom-bar input::-moz-range-track {
+  background: transparent;
+}

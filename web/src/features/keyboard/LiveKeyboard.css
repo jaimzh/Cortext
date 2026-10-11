@@ -1,10 +1,57 @@
-.live-keyboard-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.live-keyboard-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-.live-keyboard-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--subtle); }
-.live-keyboard-status.connected::before { background: var(--accent); }
-.live-keyboard-clear { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; margin: 0; border: 0; background: transparent; color: var(--muted); }
-.live-keyboard-clear:hover { background: var(--surface); color: var(--heading); }
-.live-keyboard-panel textarea { padding-right: 16px; }
-.live-keyboard-panel textarea:disabled { opacity: 0.6; }
-.input-ribbon-tab .live-keyboard-icon { position: relative; display: grid; }
-.input-ribbon-tab .live-keyboard-badge { position: absolute; right: -4px; bottom: -4px; width: 12px; height: 12px; background: var(--background); border-radius: 2px; }
+.live-keyboard-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.live-keyboard-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.live-keyboard-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--subtle);
+}
+.live-keyboard-status.connected::before {
+  background: var(--accent);
+}
+.live-keyboard-clear {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.live-keyboard-clear:hover {
+  background: var(--surface);
+  color: var(--heading);
+}
+.live-keyboard-panel textarea {
+  padding-right: 16px;
+}
+.live-keyboard-panel textarea:disabled {
+  opacity: 0.6;
+}
+.input-ribbon-tab .live-keyboard-icon {
+  position: relative;
+  display: grid;
+}
+.input-ribbon-tab .live-keyboard-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 12px;
+  height: 12px;
+  background: var(--background);
+  border-radius: 2px;
+}
