@@ -1,29 +1,48 @@
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { useState } from 'react';
-import { Mouse, Keyboard, Microphone, GameController, ArrowsOut, ArrowRight } from '@phosphor-icons/react';
-import { asciiWordmark, tagline } from '../content/brand.js';
+import { ArrowClockwise, ArrowRight } from '@phosphor-icons/react';
+import LaptopPreview from '../components/showcase/LaptopPreview.jsx';
+import { applyDemoInput, initialDemoState } from '../demo/demoState.js';
+import '../components/showcase/Showcase.css';
 
 export default function Showcase() {
-  const [mode, setMode] = useState('mouse');
-  const [view, setView] = useState('web');
-  function switchTab(event) {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    event.preventDefault();
-    const next = event.key === 'Home' ? 'web' : event.key === 'End' ? 'tui' : view === 'web' ? 'tui' : 'web';
-    setView(next);
-    document.getElementById(`tab-${next}`).focus();
+  const frame = useRef(null);
+  const [generation, setGeneration] = useState(0);
+  const [state, dispatch] = useReducer((current, event) => event.type === 'demo.reset' ? initialDemoState() : applyDemoInput(current, event), undefined, initialDemoState);
+
+  useEffect(() => {
+    function receive(event) {
+      if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
+      if (event.data?.type === 'cortext-demo') dispatch(event.data.event || {});
+    }
+    window.addEventListener('message', receive);
+    return () => window.removeEventListener('message', receive);
+  }, []);
+
+  function reset() {
+    dispatch({ type: 'demo.reset' });
+    setGeneration(value => value + 1);
   }
-  const modes = [['mouse', Mouse, 'Mouse'], ['keyboard', Keyboard, 'Keyboard'], ['voice', Microphone, 'Voice'], ['controller', GameController, 'Controller']];
-  return <section id="showcase" className="section container">
-    <div className="section-heading"><div><h2>A familiar screen.<br />A different kind of input.</h2></div><p>Interface illustrations: a terminal on your computer and a clean control surface on your phone.</p></div>
-    <div className="showcase-shell">
-      <div className="showcase-toolbar"><div className="view-tabs" role="tablist" aria-label="Showcase interface">{[['web', 'Web interface'], ['tui', 'Terminal interface']].map(([value, label]) => <button key={value} type="button" role="tab" id={`tab-${value}`} aria-selected={view === value} tabIndex={view === value ? 0 : -1} aria-controls="interface-preview" onKeyDown={switchTab} onClick={() => setView(value)}>{label}</button>)}</div></div>
-      <div id="interface-preview" role="tabpanel" aria-labelledby={`tab-${view}`} className="interface-preview">
-        {view === 'web' ? <><div className="demo-toolbar"><div className="demo-tabs">{modes.map(([id, Icon, label]) => <button key={id} type="button" aria-label={`Preview ${label.toLowerCase()}`} aria-pressed={mode === id} onClick={() => setMode(id)}><Icon size={21} /></button>)}</div><span className="demo-logo">{'[ C ]'}</span><ArrowsOut size={20} aria-hidden="true" /></div>
-          {mode === 'controller' ? <div className="controller-demo"><div><div className="shoulders"><span>LT</span><span>LB</span></div><div className="stick"><span /></div></div><div className="center-controls"><span>Select</span><span>Start</span></div><div><div className="shoulders"><span>RB</span><span>RT</span></div><div className="face-buttons"><span>Y</span><span>X</span><span>B</span><span>A</span></div></div></div> : <><div className="touchpad-demo"><div className="cursor-trail" aria-hidden="true"><Mouse size={28} /></div><span>{mode === 'mouse' ? 'A little more room to move.' : mode === 'voice' ? 'Your voice, at the cursor.' : 'From your phone to your computer.'}</span><div className="scroll-strip" aria-hidden="true"><i /></div></div><div className="mouse-buttons"><span>Left</span><span>Right</span></div><div className="demo-input">{mode === 'voice' ? <><Microphone size={22} /><span>Record. Transcribe. Paste.</span></> : <><Keyboard size={22} /><span>{mode === 'keyboard' ? 'Live typing, one keystroke at a time.' : 'Keyboard and voice, a tap away.'}</span></>}</div></>}
-        </> : <div className="terminal-demo"><div className="terminal-dots" aria-hidden="true"><i /><i /><i /></div><pre aria-label="Cortext ASCII logo">{asciiWordmark}</pre><p>{tagline}</p><div className="terminal-menu"><span className="terminal-selected">› New Session</span><span>  Models</span></div><small>Start a session. Scan the QR code. Connect.</small></div>}
+
+  return (
+    <section id="showcase" className="section container">
+      <div className="section-heading">
+        <h2>Your phone.<br />Meet your computer.</h2>
+        <p>Try the actual Cortext interface. Move the touchpad, click Left or Right, or send text to the simulated laptop. Voice transcription requires the local app.</p>
       </div>
-      <div className="showcase-caption"><Link to="/field-notes/">Explore the controls <ArrowRight size={16} /></Link></div>
-    </div>
-  </section>;
+      <div className="interactive-showcase">
+        <div className="phone-preview">
+          <iframe key={generation} ref={frame} src="/demo/index.html" title="Interactive Cortext phone interface" loading="lazy" allow="microphone 'none'; camera 'none'; fullscreen" allowFullScreen />
+        </div>
+        <div className="laptop-column">
+          <LaptopPreview state={state} onInput={dispatch} />
+          <p className="demo-feedback" role="status">{state.feedback}</p>
+          <div className="demo-links">
+            <button className="demo-reset" type="button" onClick={reset}><ArrowClockwise size={17} /> Reset demo</button>
+            <Link className="text-link" to="/field-notes/">Explore the controls <ArrowRight size={16} /></Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }

@@ -39,16 +39,26 @@ npm.cmd run preview
 - `src/content/brand.js`: ASCII branding and the tagline, "Control your computer from your phone."
 - `src/styles/theme.css`: brand tokens matching the control app.
 - `src/styles/landing.css`: website layout and responsive styles.
+- `src/components/showcase/`: simulated laptop and phone-frame styling.
+- `src/demo/`: local demo API, laptop input state, and input tests.
 
-The previews are labelled illustrations, not live controls or screenshots.
-Add real screenshots or recordings under `public/` when available. The theme
-tokens are currently copied from the web app; update both if the brand changes.
+The showcase imports the actual `web/src/layouts/MainLayout.jsx` and its styles
+into a separate iframe entry point at `/demo/index.html`. Its API adapter emits
+local messages to the laptop simulator instead of calling the Python backend.
+Mouse, regular/live typing, zoom, and controller input work in the simulation.
+Voice has no installed models and needs the real backend. Reset reloads the
+phone UI and clears the laptop; browser-saved layout preferences persist.
+
+Run `npm.cmd test` for the demo transport and laptop state tests. Brand tokens
+are copied from the web app; update both if the brand changes.
 
 ## Vercel
 
 Import the repository as a Vercel project and configure:
 
 - Root Directory: `landing`
+- Enable **Include source files outside of the Root Directory in the Build Step**
+  so the build can read the shared `web/src/` UI. Only `dist/` is deployed.
 - Framework Preset: Vite
 - Build Command: `npm run build`
 - Output Directory: `dist`
@@ -57,7 +67,8 @@ Import the repository as a Vercel project and configure:
 The `landing` branch can receive preview deployments. View generated URLs in
 Vercel's project dashboard. A custom domain can be attached later.
 
-Vite builds one HTML entry point. React Router selects the page and internal
+Vite builds the landing entry point plus the isolated demo entry point.
+React Router selects the landing page and internal
 links navigate without reloading the document. `vercel.json` rewrites incoming
 paths to `/index.html`, so direct visits and refreshes on `/docs/` and
 `/field-notes/` work on Vercel. Unknown paths show the site's not-found page.
