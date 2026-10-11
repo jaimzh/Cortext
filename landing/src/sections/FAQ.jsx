@@ -20,6 +20,14 @@ export default function FAQ() {
           <div className="faq-list">
             {[
               [
+                'Why did you make Cortext?',
+                'I was bored and wanted to see if I could turn my phone into an input device for my computer. So I gave it a go, and Cortext grew from there.',
+              ],
+              [
+                'Is it better than dedicated input devices?',
+                'Probably not. I built Cortext out of curiosity, and it has been a fun project to figure out. If someone else finds it useful too, that’s a bonus.',
+              ],
+              [
                 'Do I need to install an app on my phone?',
                 'The current interface runs in your phone’s browser. Your computer runs the Python server; your phone opens the session link.',
               ],

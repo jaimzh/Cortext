@@ -9,9 +9,17 @@
 
 **Control your computer from your phone.**
 
+[Website & documentation](https://cortext-page.vercel.app/)
+
 Cortext turns your phone into a touchpad, keyboard, microphone, and game controller for your computer. Start the server on your computer, open the connection link on your phone, and use the browser interface to send input to your desktop.
 
 This is an evolving personal project. The current setup targets Windows, and the phone interface runs in a browser. A packaged mobile app is not required.
+
+## Why I built this
+
+I was bored and wanted to see if I could turn my phone into an input device for my computer. So I gave it a go, and Cortext grew from there.
+
+Is it better than a proper mouse, keyboard, microphone, or controller? Probably not. I built it out of curiosity, and it has been a fun project to figure out. If someone else finds it useful too, that's a bonus.
 
 ## What you can do
 
