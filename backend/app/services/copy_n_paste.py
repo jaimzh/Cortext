@@ -11,6 +11,7 @@ ALLOWED_KEYS = {
     "esc": "esc",
     "backspace": "backspace",
     "space": "space",
+    "win": "win",
     "up": "up",
     "down": "down",
     "left": "left",

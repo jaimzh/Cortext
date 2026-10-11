@@ -12,6 +12,7 @@ export function useVoice(api, report) {
     const [model, setModel] = useState('base');
     const [paste, setPaste] = useState(true);
     const [phase, setPhase] = useState('idle');
+    const [transcript, setTranscript] = useState('');
     const phaseRef = useRef('idle');
     const recorder = useRef(null);
     const stream = useRef(null);
@@ -70,7 +71,10 @@ export function useVoice(api, report) {
                 try {
                     const blob = new Blob(chunks, { type: recording.mimeType || 'audio/webm' });
                     const data = await api.uploadAudio(blob, { paste, model });
-                    if (mounted.current) report(data.message || 'Done', data.text || '');
+                    if (mounted.current) {
+                        setTranscript(typeof data.text === 'string' ? data.text : '');
+                        report(data.message || 'Done', data.text || '');
+                    }
                 } catch (error) {
                     if (mounted.current) report('Something went wrong.', error.message);
                 } finally {
@@ -89,5 +93,5 @@ export function useVoice(api, report) {
         }
     }
 
-    return { models, model, setModel, paste, setPaste, phase, toggleRecording };
+    return { models, model, setModel, paste, setPaste, phase, transcript, toggleRecording };
 }

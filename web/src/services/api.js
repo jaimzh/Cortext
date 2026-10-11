@@ -7,6 +7,7 @@ const MOUSE_MOVE_URL = `${window.location.origin}/mouse/move`;
 const MOUSE_CLICK_URL = `${window.location.origin}/mouse/click`;
 const MOUSE_BUTTON_URL = `${window.location.origin}/mouse/button`;
 const MOUSE_SCROLL_URL = `${window.location.origin}/mouse/scroll`;
+const MOUSE_ZOOM_URL = `${window.location.origin}/mouse/zoom`;
 const CONTROLLER_WS_URL = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/controller/ws`;
 const SOCKET_RECONNECT_MS = 800;
 
@@ -114,6 +115,9 @@ export function createApi(token) {
         },
         sendLiveKeyboardKey(key) {
             return sendControllerEventOverSocket({ type: 'keyboard.key', key });
+        },
+        sendLiveKeyboardShortcut(shortcut) {
+            return sendControllerEventOverSocket({ type: 'keyboard.shortcut', shortcut });
         },
 
         onControllerMessage(listener) {
@@ -237,6 +241,15 @@ export function createApi(token) {
             formData.append("dy", dy);
 
             await fetch(MOUSE_SCROLL_URL, { method: "POST", body: formData });
+        },
+
+        async sendMouseZoom(steps, method = 'wheel') {
+            if (sendControllerEventOverSocket({ type: 'mouse.zoom', steps, method })) return;
+            const formData = createTokenForm(token);
+            formData.append('steps', steps);
+            formData.append('method', method);
+            const response = await fetch(MOUSE_ZOOM_URL, { method: 'POST', body: formData });
+            if (!response.ok) throw new Error(`Zoom failed with status ${response.status}`);
         },
 
         async sendMouseClick(button, clicks = 1) {

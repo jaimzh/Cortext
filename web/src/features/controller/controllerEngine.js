@@ -9,10 +9,36 @@ export function initController(elements, api) {
         controllerButtons,
         controllerSticks,
         statusText,
+        onHapticPress,
     } = elements;
 
     const activePointers = new Map();
     const activeControls = new Set();
+    const stickTaps = new Map();
+    const heldButtons = new Map();
+
+    // Separate buttons and double-tap gestures can hold the same Xbox button.
+    function pressGamepadButton(button) {
+        const count = heldButtons.get(button) || 0;
+        heldButtons.set(button, count + 1);
+        if (!count) sendGamepadEvent({ type: 'gamepad.button', button, action: 'down' });
+    }
+
+    function releaseGamepadButton(button) {
+        const count = heldButtons.get(button) || 0;
+        if (count > 1) heldButtons.set(button, count - 1);
+        else if (count === 1) {
+            heldButtons.delete(button);
+            sendGamepadEvent({ type: 'gamepad.button', button, action: 'up' });
+        }
+    }
+
+    function releaseStickClick(control) {
+        if (!control.stickClicked) return;
+        control.stickClicked = false;
+        control.stick.classList.remove('stick-clicked');
+        releaseGamepadButton(`${control.stick.dataset.gamepadStick}_stick`);
+    }
 
     const removeMessage = api.onControllerMessage?.((message) => {
         if (message.type === "gamepad.status") {
@@ -44,6 +70,23 @@ export function initController(elements, api) {
         sendGamepadEvent({ type: 'gamepad.trigger', side: control.trigger, value });
     }
 
+    function stopTriggerHold(control) {
+        clearTimeout(control.holdTimer);
+        control.holdTimer = null;
+    }
+
+    function startTriggerHold(control) {
+        const started = Date.now();
+        function tick() {
+            if (disposed || control.sliding || !activeControls.has(control.controlId)) return;
+            const elapsed = Date.now() - started;
+            updateTrigger(control, 0.15 + 0.85 * elapsed / 500);
+            if (elapsed < 500) control.holdTimer = setTimeout(tick, Math.min(40, 500 - elapsed));
+            else control.holdTimer = null;
+        }
+        control.holdTimer = setTimeout(tick, 40);
+    }
+
     function pressControl(button, event) {
         const pointerId = event.pointerId;
         const gamepadButton = button.dataset.gamepadButton;
@@ -61,15 +104,13 @@ export function initController(elements, api) {
         activePointers.set(pointerId, control);
         activeControls.add(controlId);
         button.classList.add("pressed");
+        onHapticPress?.();
 
         if (gamepadButton) {
-            sendGamepadEvent({
-                type: "gamepad.button",
-                action: "down",
-                button: gamepadButton,
-            });
+            pressGamepadButton(gamepadButton);
         } else if (trigger) {
             updateTrigger(control, 0.15);
+            startTriggerHold(control);
         } else if (keyboardKey) {
             api.sendKeyboardKey(keyboardKey).catch(error => {
                 if (!disposed) statusText.textContent = `Key press failed: ${error.message}`;
@@ -91,34 +132,31 @@ export function initController(elements, api) {
         control.button.classList.remove("pressed");
 
         if (control.gamepadButton) {
-            sendGamepadEvent({
-                type: "gamepad.button",
-                action: "up",
-                button: control.gamepadButton,
-            });
+            releaseGamepadButton(control.gamepadButton);
         } else if (control.trigger) {
+            stopTriggerHold(control);
             updateTrigger(control, 0);
         }
     }
 
     function releaseAll() {
         activePointers.forEach((control) => {
+            releaseStickClick(control);
             if (control.gamepadButton) {
-                sendGamepadEvent({
-                    type: "gamepad.button",
-                    action: "up",
-                    button: control.gamepadButton,
-                });
+                releaseGamepadButton(control.gamepadButton);
             } else if (control.trigger) {
+                stopTriggerHold(control);
                 updateTrigger(control, 0);
             }
         });
 
         controllerSticks.forEach((stick) => {
             updateStick(stick, 0, 0);
+            stick.classList.remove('pressed');
         });
 
         activePointers.clear();
+        stickTaps.clear();
         activeControls.clear();
         controllerButtons.forEach((button) => button.classList.remove("pressed"));
     }
@@ -159,7 +197,7 @@ export function initController(elements, api) {
 
     controllerButtons.forEach((button) => {
         listen(button, "pointerdown", (event) => {
-            if (controllerPanel.dataset.editing === 'true') return;
+            if (controllerPanel.dataset.editing === 'true' || button.closest('[hidden]')) return;
             event.preventDefault();
 
             try {
@@ -179,7 +217,14 @@ export function initController(elements, api) {
             const angle = control.rotation * Math.PI / 180;
             const distance = (event.clientY - control.startY) * Math.cos(angle)
                 - (event.clientX - control.startX) * Math.sin(angle);
-            updateTrigger(control, 0.15 + distance / 80);
+            if (!control.sliding) {
+                // Small touch jitter should not cancel a stationary hold.
+                if (Math.abs(distance) < 4) return;
+                control.sliding = true;
+                control.slideStartValue = control.value;
+                stopTriggerHold(control);
+            }
+            updateTrigger(control, control.slideStartValue + distance / 80);
         });
 
         listen(button, "pointerup", (event) => {
@@ -200,7 +245,8 @@ export function initController(elements, api) {
 
     controllerSticks.forEach((stick) => {
         listen(stick, "pointerdown", (event) => {
-            if (controllerPanel.dataset.editing === 'true') return;
+            if (controllerPanel.dataset.editing === 'true' || stick.closest('[hidden]')) return;
+            if ([...activePointers.values()].some(control => control.stick === stick)) return;
             event.preventDefault();
 
             try {
@@ -209,8 +255,18 @@ export function initController(elements, api) {
                 // Pointer capture is best-effort on mobile browsers.
             }
 
-            activePointers.set(event.pointerId, { stick });
+            const tap = stickTaps.get(stick);
+            const stickClicked = Boolean(tap && Date.now() - tap.time <= 300
+                && Math.hypot(event.clientX - tap.x, event.clientY - tap.y) <= 24);
+            stickTaps.delete(stick);
+            activePointers.set(event.pointerId, { stick, stickClicked, started: Date.now(),
+                startX: event.clientX, startY: event.clientY, moved: false });
             stick.classList.add("pressed");
+            if (stickClicked) {
+                stick.classList.add('stick-clicked');
+                pressGamepadButton(`${stick.dataset.gamepadStick}_stick`);
+            }
+            onHapticPress?.();
             moveStick(stick, event);
             statusText.textContent = "Controller";
         });
@@ -221,21 +277,28 @@ export function initController(elements, api) {
 
             const control = activePointers.get(event.pointerId);
 
-            if (!control?.stick) {
+            if (control?.stick !== stick) {
                 return;
             }
 
+            if (Math.hypot(event.clientX - control.startX, event.clientY - control.startY) > 10) control.moved = true;
             moveStick(stick, event);
         });
 
         function releaseStick(event) {
             const control = activePointers.get(event.pointerId);
 
-            if (!control?.stick) {
+            if (control?.stick !== stick) {
                 return;
             }
 
             activePointers.delete(event.pointerId);
+            const distance = Math.hypot(event.clientX - control.startX, event.clientY - control.startY);
+            if (event.type === 'pointerup' && !control.stickClicked && !control.moved && distance <= 10
+                && Date.now() - control.started <= 250) {
+                stickTaps.set(stick, { time: Date.now(), x: control.startX, y: control.startY });
+            } else stickTaps.delete(stick);
+            releaseStickClick(control);
             stick.classList.remove("pressed");
             updateStick(stick, 0, 0);
         }
@@ -246,6 +309,7 @@ export function initController(elements, api) {
         });
 
         listen(stick, "pointercancel", releaseStick);
+        listen(stick, 'lostpointercapture', releaseStick);
         listen(stick, "contextmenu", (event) => {
             event.preventDefault();
         });

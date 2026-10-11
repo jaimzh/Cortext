@@ -3,6 +3,15 @@ import { HUD_IDS, HUD_STORAGE_KEY, moveHudControl, readHudLayout, screenDelta } 
 
 afterEach(() => localStorage.clear());
 
+it('preserves existing HUD positions while adding right stick and D-pad to old layouts', () => {
+    const old = Object.fromEntries(HUD_IDS.filter(id => !['rightStick', 'dpad'].includes(id)).map(id => [id, { x: 0.4, y: 0.6, scale: 1.2 }]));
+    localStorage.setItem(HUD_STORAGE_KEY, JSON.stringify(old));
+    const result = readHudLayout();
+    expect(result.stick).toEqual(old.stick);
+    expect(result.rightStick).toEqual({ x: 0.67, y: 0.66, scale: 1 });
+    expect(result.dpad).toEqual({ x: 0.34, y: 0.66, scale: 1 });
+});
+
 it('maps portrait drags into landscape coordinates and bounds positions', () => {
     const delta = screenDelta(0, 60, 90);
     expect(delta.x).toBeCloseTo(60);

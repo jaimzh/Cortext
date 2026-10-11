@@ -1,3 +1,5 @@
+import math
+
 import pyautogui
 
 
@@ -43,3 +45,23 @@ def scroll_by(dx: float, dy: float):
 
     if dx:
         pyautogui.hscroll(int(round(dx)))
+
+
+def zoom_by(steps, method='wheel'):
+    if isinstance(steps, bool) or not isinstance(steps, (int, float)) or not math.isfinite(steps) \
+            or steps != int(steps) or abs(steps) > 20:
+        raise ValueError("Zoom steps must be an integer between -20 and 20.")
+    if method not in ('wheel', 'shortcuts'):
+        raise ValueError("Unsupported zoom method.")
+    if not steps:
+        return
+    if method == 'shortcuts':
+        for _ in range(abs(int(steps))):
+            pyautogui.hotkey('ctrl', '+' if steps > 0 else '-', _pause=False)
+        return
+    # Each zoom event owns its modifier; disconnects cannot leave Ctrl held.
+    try:
+        pyautogui.keyDown('ctrl', _pause=False)
+        pyautogui.scroll(int(steps), _pause=False)
+    finally:
+        pyautogui.keyUp('ctrl', _pause=False)

@@ -19,6 +19,8 @@ export function initTrackpad(elements, api) {
     const {
         trackpadPad,
         trackpadScrollBar,
+        trackpadZoomSlider,
+        zoomMethod = 'wheel',
         sensitivitySlider,
         sensitivityValue,
         statusText,
@@ -27,6 +29,10 @@ export function initTrackpad(elements, api) {
     const pointerMap = new Map();
     let pendingDelta = { x: 0, y: 0 };
     let pendingScroll = { x: 0, y: 0 };
+    let zoomValue = 0;
+    let zoomTimer = null;
+    let zoomSending = false;
+    let zoomGeneration = 0;
     let previousPointerCount = 0;
     let pendingTapTimer = null;
     let tapMoved = false;
@@ -43,6 +49,13 @@ export function initTrackpad(elements, api) {
     let scrollBarPreviousY = 0;
     let scrollBarEdgeVelocity = 0;
     let scrollBarEdgeLoopStarted = false;
+
+    const removeZoomMessages = trackpadZoomSlider ? api.onControllerMessage?.(message => {
+        if (message.type === 'error' && message.source === 'mouse.zoom') {
+            resetZoomSlider();
+            statusText.textContent = `Zoom failed: ${message.message}`;
+        }
+    }) : null;
 
     async function sendMouseMove(dx, dy) {
         try {
@@ -266,6 +279,7 @@ export function initTrackpad(elements, api) {
             }
         } else {
             scrolledSincePress = true;
+            pendingDelta = { x: 0, y: 0 };
             cancelPendingTap();
             secondTapActive = false;
             doubleClickTapActive = false;
@@ -315,13 +329,15 @@ export function initTrackpad(elements, api) {
             }
 
             const sensitivity = Number(sensitivitySlider.value);
-            pendingScroll.y += dy * SCROLL_STEP_FACTOR * sensitivity;
             pendingScroll.x += dx * SCROLL_STEP_FACTOR * sensitivity;
+            pendingScroll.y += dy * SCROLL_STEP_FACTOR * sensitivity;
             previousPointerCount = pointerMap.size;
             return;
         }
 
         if (pointerMap.size === 1) {
+            // Do not move the cursor with the remaining finger after a two-finger gesture.
+            if (scrolledSincePress) return;
             if (secondTapActive) {
                 if (Math.abs(dx) + Math.abs(dy) > DRAG_MOVE_THRESHOLD) {
                     startDrag();
@@ -348,6 +364,7 @@ export function initTrackpad(elements, api) {
     });
 
     function handlePointerEnd(event, cancelled) {
+        if (!pointerMap.has(event.pointerId)) return;
         const wasScroll = pointerMap.size === 2;
         pointerMap.delete(event.pointerId);
 
@@ -404,6 +421,7 @@ export function initTrackpad(elements, api) {
     listen(trackpadPad, "pointercancel", (event) => {
         handlePointerEnd(event, true);
     });
+    listen(trackpadPad, 'lostpointercapture', event => handlePointerEnd(event, true));
 
     listen(trackpadPad, "contextmenu", (event) => {
         event.preventDefault();
@@ -473,8 +491,77 @@ export function initTrackpad(elements, api) {
         listen(trackpadScrollBar, "touchmove", (event) => event.preventDefault(), { passive: false });
     }
 
+    function resetZoomSlider() {
+        clearTimeout(zoomTimer);
+        zoomTimer = null;
+        zoomValue = 0;
+        zoomGeneration += 1;
+        if (trackpadZoomSlider) trackpadZoomSlider.value = '0';
+    }
+
+    function scheduleZoom() {
+        if (disposed || !zoomValue || zoomSending) return;
+        const interval = 1000 / (1.5 + 0.65 * (Math.abs(zoomValue) - 1));
+        const generation = zoomGeneration;
+        zoomTimer = setTimeout(() => sendZoomTick(generation), interval);
+    }
+
+    async function sendZoomTick(generation) {
+        zoomTimer = null;
+        if (disposed || !zoomValue || zoomSending || generation !== zoomGeneration) return;
+        zoomSending = true;
+        try {
+            // Send one notch at a time, never queue a burst behind a slow request.
+            await api.sendMouseZoom(Math.sign(zoomValue), zoomMethod);
+        } catch (error) {
+            if (!disposed && generation === zoomGeneration) {
+                statusText.textContent = 'Zoom failed.';
+                resetZoomSlider();
+            }
+        } finally {
+            zoomSending = false;
+            scheduleZoom();
+        }
+    }
+
+    if (trackpadZoomSlider) {
+        listen(trackpadZoomSlider, 'input', () => {
+            const value = Math.max(-10, Math.min(10, Number(trackpadZoomSlider.value)));
+            if (!value) { resetZoomSlider(); return; }
+            const starting = !zoomValue || Math.sign(value) !== Math.sign(zoomValue);
+            zoomValue = value;
+            clearTimeout(zoomTimer);
+            zoomTimer = null;
+            if (starting) {
+                zoomGeneration += 1;
+                sendZoomTick(zoomGeneration);
+            } else {
+                scheduleZoom();
+            }
+        });
+        listen(trackpadZoomSlider, 'pointerup', resetZoomSlider);
+        listen(trackpadZoomSlider, 'lostpointercapture', resetZoomSlider);
+        listen(trackpadZoomSlider, 'blur', resetZoomSlider);
+        listen(trackpadZoomSlider, 'pointercancel', resetZoomSlider);
+        listen(trackpadZoomSlider, 'keydown', event => {
+            if (event.key === 'Escape') resetZoomSlider();
+        });
+        listen(trackpadZoomSlider, 'keyup', event => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) resetZoomSlider();
+        });
+        listen(window, 'blur', resetZoomSlider);
+        listen(document, 'visibilitychange', () => {
+            if (document.hidden) resetZoomSlider();
+        });
+    }
+
     elements.mouseButtons.forEach((button) => {
-        listen(button, "click", () => {
+        listen(button, 'pointerdown', event => {
+            if (event.button === 0) elements.onHapticPress?.();
+        });
+        listen(button, "click", event => {
+            // Keyboard and assistive activation have no preceding pointer press.
+            if (event.detail === 0) elements.onHapticPress?.();
             const label = button.querySelector(".button-label").textContent.trim();
             sendMouseClick(button.dataset.click, label);
         });
@@ -487,10 +574,12 @@ export function initTrackpad(elements, api) {
     return () => {
         disposed = true;
         events.abort();
+        removeZoomMessages?.();
         cancelPendingTap();
         endDrag();
         pointerMap.clear();
+        resetZoomSlider();
         trackpadPad.classList.remove('active', 'dragging');
-        trackpadScrollBar.classList.remove('active');
+        trackpadScrollBar?.classList.remove('active');
     };
 }

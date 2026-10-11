@@ -45,6 +45,8 @@ export default function Voice({ api, report }) {
                     </select>
                 </span>
             </label>
+            <textarea className="voice-transcript" aria-label="Voice transcript" readOnly value={voice.transcript}
+                placeholder={voice.phase === 'uploading' ? 'Transcribing…' : 'Your transcribed text will appear here.'} />
         </section>
     );
 }

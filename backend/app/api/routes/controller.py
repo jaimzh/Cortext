@@ -44,6 +44,10 @@ def handle_controller_event(event: dict):
         )
         return
 
+    if event_type == "mouse.zoom":
+        mouse_control.zoom_by(event.get("steps"), event.get("method", "wheel"))
+        return
+
     if event_type == "mouse.click":
         clicks = int(_number(event.get("clicks"), 1))
 

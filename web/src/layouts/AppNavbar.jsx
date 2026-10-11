@@ -1,10 +1,7 @@
-const asciiC = '  ____\n / ___|\n| |    \n| |___ \n \\____|';
+import CortextLogo from './CortextLogo.jsx';
 
 export default function AppNavbar({ onAbout, buttonRef }) {
     return <nav className="app-navbar" aria-label="Cortext navigation">
-        <button ref={buttonRef} className="app-logo" type="button" aria-label="About Cortext"
-            title="About Cortext" onClick={onAbout}>
-            <pre aria-hidden="true">{asciiC}</pre>
-        </button>
+        <CortextLogo buttonRef={buttonRef} onAbout={onAbout} />
     </nav>;
 }

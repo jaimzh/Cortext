@@ -9,6 +9,11 @@ from app.services import copy_n_paste
 
 
 class LiveKeyboardTests(unittest.TestCase):
+    def test_windows_start_key_presses_windows_once(self):
+        with patch.object(copy_n_paste.pyautogui, 'press') as press:
+            controller.handle_controller_event({'type': 'keyboard.key', 'key': 'win'})
+        press.assert_called_once_with('win')
+
     def test_edit_preserves_spaces_and_orders_backspace_before_typing(self):
         with patch.object(copy_n_paste.pyautogui, 'press') as press, \
                 patch.object(copy_n_paste.pyautogui, 'write') as write:

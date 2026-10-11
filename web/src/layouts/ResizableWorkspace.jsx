@@ -4,7 +4,7 @@ import { AutoScroller, Cursor, Feedback, PointerSensor } from '@dnd-kit/dom';
 
 const STORAGE_KEY = 'cortext.mouseHeight';
 const DEFAULT_HEIGHT = 320;
-const MIN_HEIGHT = 180;
+const MIN_HEIGHT = 120;
 const MAX_HEIGHT = 640;
 const clamp = height => Math.round(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, height)));
 

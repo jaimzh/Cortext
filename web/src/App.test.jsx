@@ -16,20 +16,212 @@ function mockApi() {
         sendMouseClick: vi.fn().mockResolvedValue({}),
         sendMouseMove: vi.fn().mockResolvedValue(undefined),
         sendMouseScroll: vi.fn().mockResolvedValue(undefined),
+        sendMouseZoom: vi.fn().mockResolvedValue(undefined),
         sendMouseButton: vi.fn().mockResolvedValue(undefined),
         sendControllerEvent: vi.fn().mockReturnValue(true),
-        onControllerMessage: vi.fn().mockReturnValue(vi.fn()),
+        onControllerMessage: vi.fn().mockImplementation(() => vi.fn()),
         onControllerOpen: vi.fn().mockReturnValue(vi.fn()),
         connectInputSocket: vi.fn(),
         onInputConnection: vi.fn(listener => { listener(true); return vi.fn(); }),
         sendLiveKeyboardInput: vi.fn().mockReturnValue(true),
         sendLiveKeyboardKey: vi.fn().mockReturnValue(true),
+        sendLiveKeyboardShortcut: vi.fn().mockReturnValue(true),
         loadModels: vi.fn().mockResolvedValue(null),
         uploadAudio: vi.fn().mockResolvedValue({ text: 'hello' }),
     };
 }
 
 describe('React input workspace', () => {
+    it('optionally shows separate L3/R3 buttons, saves the choice and allows resizing them', () => {
+        const api = mockApi();
+        const view = render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        expect(screen.queryByRole('button', { name: 'L3', exact: true })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'R3', exact: true })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Visible controls' }));
+        for (const label of ['L3 button', 'R3 button']) {
+            fireEvent.click(screen.getByRole('checkbox', { name: label, exact: true }));
+        }
+        for (const [buttonName, value] of [['L3', 'left_stick'], ['R3', 'right_stick']]) {
+            const button = screen.getByRole('button', { name: buttonName, exact: true });
+            fireEvent.pointerDown(button);
+            expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.button', button: value, action: 'down' });
+            fireEvent.pointerUp(button);
+            expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.button', button: value, action: 'up' });
+        }
+        fireEvent.keyDown(document, { key: 'Escape' });
+        const shell = screen.getByRole('application', { name: 'Game controller' });
+        Object.defineProperties(shell, { offsetWidth: { value: 600 }, offsetHeight: { value: 300 } });
+        fireEvent.click(screen.getByRole('button', { name: 'Edit layout' }));
+        fireEvent.change(screen.getByRole('combobox', { name: 'Select control' }), { target: { value: 'l3' } });
+        fireEvent.change(screen.getByRole('slider', { name: 'Control size' }), { target: { value: '120' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save layout' }));
+        expect(JSON.parse(localStorage.getItem(HUD_STORAGE_KEY)).l3.scale).toBe(1.2);
+        view.unmount();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        expect(screen.getByRole('button', { name: 'L3', exact: true })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'R3', exact: true })).toBeTruthy();
+        fireEvent.pointerDown(screen.getByRole('button', { name: 'L3', exact: true }));
+        fireEvent.click(screen.getByRole('button', { name: 'Visible controls' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'L3 button', exact: true }));
+        expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.button', button: 'left_stick', action: 'up' });
+        expect(screen.queryByRole('button', { name: 'L3', exact: true })).toBeNull();
+    });
+
+    it('sends independent right-stick input and D-pad button presses', () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        const left = screen.getByLabelText('Left stick');
+        const right = screen.getByLabelText('Right stick');
+        for (const stick of [left, right]) vi.spyOn(stick, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 100, height: 100 });
+        function pointer(target, type, id, x = 75) {
+            const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: 50 });
+            Object.defineProperty(event, 'pointerId', { value: id });
+            fireEvent(target, event);
+        }
+        pointer(left, 'pointerdown', 1);
+        pointer(right, 'pointerdown', 2);
+        expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.stick', side: 'left', x: 0.5, y: 0 });
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.stick', side: 'right', x: 0.5, y: 0 });
+        pointer(right, 'pointermove', 2, 100);
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.stick', side: 'right', x: 1, y: 0 });
+        pointer(right, 'lostpointercapture', 2);
+        expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.stick', side: 'right', x: 0, y: 0 });
+        expect(left.classList.contains('pressed')).toBe(true);
+        for (const direction of ['up', 'down', 'left', 'right']) {
+            const button = screen.getByRole('button', { name: `D-pad ${direction}`, exact: true });
+            pointer(button, 'pointerdown', 3);
+            expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.button', button: `dpad_${direction}`, action: 'down' });
+            pointer(button, 'pointerup', 3);
+            expect(api.sendControllerEvent).toHaveBeenLastCalledWith({ type: 'gamepad.button', button: `dpad_${direction}`, action: 'up' });
+        }
+    });
+
+    it('hides selected controller groups, releases held input, and remembers choices', () => {
+        const api = mockApi();
+        const view = render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        const right = screen.getByLabelText('Right stick');
+        fireEvent.pointerDown(right);
+        fireEvent.click(screen.getByRole('button', { name: 'Visible controls' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Right stick', exact: true }));
+        expect(right.hidden).toBe(true);
+        expect(right.classList.contains('pressed')).toBe(false);
+        expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.stick', side: 'right', x: 0, y: 0 });
+        fireEvent.click(screen.getByRole('checkbox', { name: 'D-pad', exact: true }));
+        expect(screen.queryByRole('button', { name: 'D-pad up' })).toBeNull();
+        fireEvent.click(screen.getByRole('checkbox', { name: 'A / B / X / Y' }));
+        expect(screen.queryByRole('button', { name: 'A', exact: true })).toBeNull();
+        api.sendControllerEvent.mockClear();
+        fireEvent.pointerDown(right);
+        expect(api.sendControllerEvent).not.toHaveBeenCalled();
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(screen.queryByRole('checkbox', { name: 'D-pad' })).toBeNull();
+        view.unmount();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        expect(screen.getByLabelText('Right stick').hidden).toBe(true);
+        expect(screen.queryByRole('button', { name: 'D-pad up' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Visible controls' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'D-pad', exact: true }));
+        expect(screen.getByRole('button', { name: 'D-pad up' })).toBeTruthy();
+        fireEvent.pointerDown(screen.getByRole('button', { name: 'Controller', exact: true }));
+        expect(screen.queryByRole('checkbox', { name: 'D-pad' })).toBeNull();
+    });
+
+    it.each(['wheel', 'shortcuts'])('uses keyboard zoom for plus/minus clicks with a saved %s preference', async method => {
+        vi.useFakeTimers();
+        localStorage.setItem('cortext.mouseSliders', JSON.stringify({ zoom: true, scroll: true, zoomMethod: method, zoomMethodVersion: 1 }));
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Zoom in', exact: true }));
+        fireEvent.click(screen.getByRole('button', { name: 'Zoom out', exact: true }));
+        await act(() => vi.advanceTimersByTimeAsync(1000));
+        expect(api.sendMouseZoom.mock.calls).toEqual([[1, 'shortcuts'], [-1, 'shortcuts']]);
+        expect(screen.getByRole('slider', { name: 'Zoom', exact: true }).value).toBe('0');
+        fireEvent.click(screen.getByRole('button', { name: 'Slider options' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Zoom slider' }));
+        expect(screen.queryByRole('button', { name: 'Zoom in', exact: true })).toBeNull();
+    });
+
+    it.each(['Keyboard', 'Live keyboard'])('shares desktop and More keys shortcuts in %s', async name => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('tab', { name, exact: true }));
+        const send = name === 'Keyboard' ? api.sendKeyboardShortcut : api.sendLiveKeyboardShortcut;
+        for (const [label, value] of [['Desk ←', 'ctrl_win_left'], ['Win+Tab', 'win_tab'], ['Desk →', 'ctrl_win_right']]) {
+            fireEvent.click(screen.getByRole('button', { name: label, exact: true }));
+            expect(send).toHaveBeenCalledWith(value);
+        }
+        fireEvent.click(screen.getByRole('button', { name: 'More keys' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Ctrl+A' }));
+        expect(send).toHaveBeenCalledWith('ctrl_a');
+        expect(screen.getByRole('button', { name: 'Space', exact: true })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Win', exact: true }));
+        expect(name === 'Keyboard' ? api.sendKeyboardKey : api.sendLiveKeyboardKey).toHaveBeenCalledWith('win');
+        if (name === 'Live keyboard') {
+            expect(api.sendKeyboardShortcut).not.toHaveBeenCalled();
+            act(() => api.onInputConnection.mock.calls[0][0](false));
+            expect(screen.getByRole('button', { name: 'Win+Tab' }).disabled).toBe(true);
+        }
+    });
+
+    it('uses keyboard zoom and reports socket zoom errors', () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Slider options' }));
+        expect(JSON.parse(localStorage.getItem('cortext.mouseSliders')).zoomMethod).toBe('shortcuts');
+        act(() => api.onControllerMessage.mock.calls.at(-1)[0]({ type: 'error', source: 'mouse.zoom', message: 'Unsupported event' }));
+        expect(screen.getByRole('alert').textContent).toContain('Zoom failed: Unsupported event');
+        expect(screen.getByRole('slider', { name: 'Zoom', exact: true }).value).toBe('0');
+    });
+
+    it('removes the zoom method picker and upgrades saved wheel preferences without changing slider visibility', () => {
+        localStorage.setItem('cortext.mouseSliders', JSON.stringify({ zoom: true, scroll: false, zoomMethod: 'wheel', zoomMethodVersion: 1 }));
+        const api = mockApi();
+        const view = render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Slider options' }));
+        expect(screen.queryByRole('combobox', { name: 'Zoom method' })).toBeNull();
+        expect(JSON.parse(localStorage.getItem('cortext.mouseSliders')).zoomMethod).toBe('shortcuts');
+        expect(screen.getByRole('checkbox', { name: 'Scroll slider' }).checked).toBe(false);
+        view.unmount();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Slider options' }));
+        expect(screen.queryByRole('combobox', { name: 'Zoom method' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Zoom in', exact: true }));
+        expect(api.sendMouseZoom).toHaveBeenCalledWith(1, 'shortcuts');
+    });
+
+    it('toggles mouse sliders from the chevron, keeps options accessible, and remembers preferences', () => {
+        const api = mockApi();
+        const view = render(<MainLayout api={api} />);
+        const button = screen.getByRole('button', { name: 'Slider options' });
+        expect(screen.queryByRole('checkbox')).toBeNull();
+        fireEvent.click(button);
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Zoom slider' }));
+        expect(screen.queryByRole('slider', { name: 'Zoom', exact: true })).toBeNull();
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Scroll slider' }));
+        expect(screen.queryByRole('application', { name: 'Touch scroll bar' })).toBeNull();
+        expect(screen.getByRole('application', { name: 'Trackpad' })).toBeTruthy();
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(screen.queryByRole('checkbox')).toBeNull();
+        expect(document.activeElement).toBe(button);
+        fireEvent.click(button);
+        expect(screen.getByRole('checkbox', { name: 'Zoom slider' }).checked).toBe(false);
+        view.unmount();
+        render(<MainLayout api={api} />);
+        expect(screen.queryByRole('slider', { name: 'Zoom', exact: true })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Slider options' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Zoom slider' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Scroll slider' }));
+        expect(screen.getByRole('slider', { name: 'Zoom', exact: true })).toBeTruthy();
+        expect(screen.getByRole('application', { name: 'Touch scroll bar' })).toBeTruthy();
+        fireEvent.pointerDown(screen.getByRole('application', { name: 'Trackpad' }));
+        expect(screen.queryByRole('checkbox')).toBeNull();
+    });
+
     it('shares fullscreen across mouse input and controller views and handles browser exit', async () => {
         render(<MainLayout api={mockApi()} />);
         fireEvent.click(screen.getByRole('button', { name: 'Enter fullscreen' }));
@@ -70,6 +262,7 @@ describe('React input workspace', () => {
         expect(api.sendKeyboardText).not.toHaveBeenCalled();
         expect(api.connectInputSocket).toHaveBeenCalledOnce();
         expect(screen.getByRole('application', { name: 'Trackpad' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'More keys' }));
         fireEvent.click(screen.getByRole('button', { name: 'Space', exact: true }));
         expect(input.value).toBe('hello ');
         expect(api.sendLiveKeyboardInput).toHaveBeenLastCalledWith({ delete: 0, text: ' ' });
@@ -103,7 +296,7 @@ describe('React input workspace', () => {
         expect(api.sendLiveKeyboardInput).toHaveBeenLastCalledWith({ delete: 0, text: 'a' });
         fireEvent.click(screen.getByRole('tab', { name: 'Voice', exact: true }));
         expect(api.onInputConnection.mock.results[0].value).toHaveBeenCalledOnce();
-        expect(api.onControllerMessage.mock.results[0].value).toHaveBeenCalledOnce();
+        expect(api.onControllerMessage.mock.results.at(-1).value).toHaveBeenCalledOnce();
     });
 
     it('sends each Android composing input before compositionend without duplicate events', () => {
@@ -132,6 +325,43 @@ describe('React input workspace', () => {
         fireEvent.click(returnButton);
         await waitFor(() => expect(api.sendKeyboardKey).toHaveBeenCalledWith('enter'));
         expect(api.uploadAudio).not.toHaveBeenCalled();
+    });
+
+    it.each([true, false])('shows the recorded transcript when paste is %s, and preserves it after an upload failure', async paste => {
+        const api = mockApi();
+        api.uploadAudio.mockResolvedValueOnce({ text: 'This is the actual transcript.' }).mockRejectedValueOnce(new Error('Upload failed'));
+        const stopTrack = vi.fn();
+        vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: stopTrack }] }) } });
+        class Recorder extends EventTarget {
+            static isTypeSupported() { return true; }
+            mimeType = 'audio/webm';
+            state = 'inactive';
+            start() { this.state = 'recording'; }
+            stop() {
+                this.state = 'inactive';
+                const chunk = new Event('dataavailable');
+                Object.defineProperty(chunk, 'data', { value: new Blob(['recorded audio']) });
+                this.dispatchEvent(chunk);
+                this.dispatchEvent(new Event('stop'));
+            }
+        }
+        vi.stubGlobal('MediaRecorder', Recorder);
+        const report = vi.fn();
+        render(<Voice api={api} report={report} />);
+        const box = screen.getByRole('textbox', { name: 'Voice transcript' });
+        expect(box.readOnly).toBe(true);
+        if (!paste) fireEvent.click(screen.getByRole('checkbox', { name: 'Paste after transcription' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Start Recording' }));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Stop Recording' })).toBeTruthy());
+        fireEvent.click(screen.getByRole('button', { name: 'Stop Recording' }));
+        await waitFor(() => expect(box.value).toBe('This is the actual transcript.'));
+        expect(api.uploadAudio).toHaveBeenCalledWith(expect.any(Blob), { paste, model: 'base' });
+        expect(stopTrack).toHaveBeenCalledOnce();
+        fireEvent.click(screen.getByRole('button', { name: 'Start Recording' }));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Stop Recording' })).toBeTruthy());
+        fireEvent.click(screen.getByRole('button', { name: 'Stop Recording' }));
+        await waitFor(() => expect(report).toHaveBeenCalledWith('Something went wrong.', 'Upload failed'));
+        expect(box.value).toBe('This is the actual transcript.');
     });
 
     it.each([['LT', 'left', 0], ['RT', 'right', 90]])('adjusts %s pressure with sliding at %s orientation', (label, side, rotation) => {
@@ -262,7 +492,7 @@ describe('React input workspace', () => {
     });
 
     it('opens the info page from the logo and returns without losing the keyboard draft', () => {
-        render(<MainLayout api={mockApi()} showNavbar />);
+        render(<MainLayout api={mockApi()} />);
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Keep this draft' } });
         fireEvent.click(screen.getByRole('button', { name: 'About Cortext' }));
         const heading = screen.getByRole('heading', { name: 'Cortext' });
@@ -271,6 +501,20 @@ describe('React input workspace', () => {
         expect(screen.queryByRole('navigation', { name: 'Input workspace' })).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: 'Back to controls' }));
         expect(screen.getByRole('textbox').value).toBe('Keep this draft');
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'About Cortext' }));
+    });
+
+    it('opens the info page from the controller toolbar, releases held input and returns to the controller', () => {
+        const api = mockApi();
+        render(<MainLayout api={api} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
+        fireEvent.pointerDown(screen.getByRole('button', { name: 'A', exact: true }));
+        fireEvent.click(screen.getByRole('button', { name: 'About Cortext' }));
+        expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.button', button: 'a', action: 'up' });
+        expect(screen.getByRole('heading', { name: 'Cortext' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Back to controls' }));
+        expect(screen.getByRole('application', { name: 'Game controller' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Controller', exact: true }).getAttribute('aria-pressed')).toBe('true');
         expect(document.activeElement).toBe(screen.getByRole('button', { name: 'About Cortext' }));
     });
 
@@ -299,7 +543,7 @@ describe('React input workspace', () => {
         expect(divider.getAttribute('aria-valuenow')).toBe('320');
         fireEvent.keyDown(divider, { key: 'Home' });
         fireEvent.keyDown(divider, { key: 'ArrowUp' });
-        expect(divider.getAttribute('aria-valuenow')).toBe('180');
+        expect(divider.getAttribute('aria-valuenow')).toBe('120');
         fireEvent.keyDown(divider, { key: 'End' });
         fireEvent.keyDown(divider, { key: 'ArrowDown', shiftKey: true });
         expect(divider.getAttribute('aria-valuenow')).toBe('640');
@@ -314,7 +558,8 @@ describe('React input workspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Left', exact: true }));
         await waitFor(() => expect(api.sendMouseClick).toHaveBeenCalledWith('left', 1));
         fireEvent.click(screen.getByRole('tab', { name: 'Voice', exact: true }));
-        expect(screen.queryByRole('textbox')).toBeNull();
+        expect(screen.queryByRole('textbox', { name: 'Text to send' })).toBeNull();
+        expect(screen.getByRole('textbox', { name: 'Voice transcript' })).toBeTruthy();
         expect(screen.getByRole('application', { name: 'Trackpad' })).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Voice', exact: true })).toBeNull();
         fireEvent.click(screen.getByRole('tab', { name: 'Keyboard' }));
@@ -343,9 +588,10 @@ describe('React input workspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Controller', exact: true }));
         fireEvent.pointerDown(screen.getByRole('button', { name: 'A', exact: true }), { pointerId: 1 });
         expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.button', action: 'down', button: 'a' });
+        const stopControllerMessages = api.onControllerMessage.mock.results.at(-1).value;
         fireEvent.click(screen.getByRole('button', { name: 'Mouse + Input' }));
         expect(api.sendControllerEvent).toHaveBeenCalledWith({ type: 'gamepad.button', action: 'up', button: 'a' });
-        expect(api.onControllerMessage.mock.results[0].value).toHaveBeenCalledOnce();
+        expect(stopControllerMessages).toHaveBeenCalledOnce();
         expect(api.onControllerOpen.mock.results[0].value).toHaveBeenCalledOnce();
         expect(document.body.classList.contains('controller-mode')).toBe(false);
     });

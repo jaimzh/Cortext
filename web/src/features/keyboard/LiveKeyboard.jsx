@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { EraserIcon } from '@phosphor-icons/react';
+import { TrashIcon } from '@phosphor-icons/react';
 import { keyboardEdit } from './liveKeyboardInput.js';
+import KeyboardShortcuts from './KeyboardShortcuts.jsx';
 import './LiveKeyboard.css';
-
-const keys = [['tab', 'Tab'], ['esc', 'Esc'], ['enter', 'Enter'], ['backspace', 'Back'],
-    ['left', '←'], ['up', '↑'], ['down', '↓'], ['right', '→']];
 
 export default function LiveKeyboard({ api, report }) {
     const [connected, setConnected] = useState(false);
@@ -26,7 +24,7 @@ export default function LiveKeyboard({ api, report }) {
             if (!value) clearBuffer();
         });
         const stopMessages = api.onControllerMessage(message => {
-            if (message.type === 'error' && message.source === 'keyboard.input') {
+            if (message.type === 'error' && ['keyboard.input', 'keyboard.key', 'keyboard.shortcut'].includes(message.source)) {
                 setFailed(true);
                 report('Live keyboard error.', message.message);
             }
@@ -53,9 +51,9 @@ export default function LiveKeyboard({ api, report }) {
         setText(next);
     }
 
-    function press(key) {
+    function press(key, shortcut = false) {
         if (!available.current || failed) return;
-        if (!api.sendLiveKeyboardKey(key)) {
+        if (!(shortcut ? api.sendLiveKeyboardShortcut(key) : api.sendLiveKeyboardKey(key))) {
             report('Live keyboard error.', 'Connection lost. Reconnect before typing.');
             return;
         }
@@ -69,7 +67,7 @@ export default function LiveKeyboard({ api, report }) {
                 {failed ? 'Clear to retry' : connected ? 'Live typing' : 'Disconnected'}
             </span>
             <button type="button" className="live-keyboard-clear" aria-label="Clear typing buffer"
-                title="Clear the local typing buffer" onClick={clearBuffer}><EraserIcon size={18} aria-hidden="true" /></button>
+                title="Clear the local typing buffer" onClick={clearBuffer}><TrashIcon size={18} aria-hidden="true" /></button>
         </div>
         <textarea aria-label="Live keyboard input" value={text} disabled={!connected || failed}
             placeholder={connected ? 'Type here to send instantly.' : 'Connect to your computer to type.'}
@@ -79,11 +77,6 @@ export default function LiveKeyboard({ api, report }) {
             onInput={event => update(event.currentTarget.value)}
             onChange={event => update(event.target.value)}
             onCompositionEnd={event => update(event.currentTarget.value)} />
-        <div className="shortcut-bar" aria-label="Live keyboard shortcuts">
-            {keys.map(([key, label]) => <button key={key} type="button" className="shortcut-button"
-                disabled={!connected || failed} onClick={() => press(key)}><span className="button-label">{label}</span></button>)}
-        </div>
-        <button type="button" className="shortcut-button live-space-button" disabled={!connected || failed}
-            onClick={() => update(committed.current + ' ')}><span className="button-label">Space</span></button>
+        <KeyboardShortcuts onPress={press} onSpace={() => update(committed.current + ' ')} disabled={!connected || failed} />
     </section>;
 }

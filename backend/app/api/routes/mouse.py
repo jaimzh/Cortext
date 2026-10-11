@@ -7,6 +7,18 @@ from app.services import mouse_control
 router = APIRouter()
 
 
+@router.post("/mouse/zoom")
+def mouse_zoom(steps: int = Form(...), token: str = Form(...), method: str = Form('wheel')):
+    _require_token(token)
+    try:
+        mouse_control.zoom_by(steps, method)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Zoom could not be sent.") from error
+    return {"message": "Zoomed"}
+
+
 def _require_token(token: str):
     if token != SESSION_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid session token.")
