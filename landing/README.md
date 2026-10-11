@@ -35,8 +35,8 @@ npm.cmd run preview
 - `src/routing/RouteEffects.jsx`: section scrolling and page metadata after navigation.
 - `src/components/`: shared navigation, footer, code blocks, Button, and AsciiWordmark.
   Button matches the web recording control; AsciiWordmark reuses the TUI's
-  pyfiglet wordmark with a blue sweep that respects reduced-motion preferences.
-- `src/content/brand.js`: ASCII branding and the TUI tagline, "Your voice, anywhere."
+  pyfiglet wordmark in the solid Cortext accent blue.
+- `src/content/brand.js`: ASCII branding and the tagline, "Control your computer from your phone."
 - `src/styles/theme.css`: brand tokens matching the control app.
 - `src/styles/landing.css`: website layout and responsive styles.
 

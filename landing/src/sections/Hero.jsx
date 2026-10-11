@@ -7,9 +7,6 @@ import { tagline } from '../content/brand.js';
 export default function Hero() {
   return (
     <section className="hero container">
-      <p className="eyebrow">
-        <span className="status-dot" /> A PERSONAL PROJECT, WITH ROOM TO PLAY
-      </p>
       <AsciiWordmark />
       <p className="hero-tagline">{tagline}</p>
       <div className="hero-bottom">
@@ -27,10 +24,6 @@ export default function Hero() {
           </Link>
         </div>
       </div>
-      <div className="hero-foot">
-        <span>{tagline.toUpperCase()}</span>
-        <span>REACT / PYTHON / WEBSOCKET</span>
-      </div>
-    </section>
+      </section>
   );
 }

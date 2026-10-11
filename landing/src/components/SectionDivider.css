@@ -1,0 +1,18 @@
+.section-divider.container {
+  height: 0;
+  margin-block: 52px;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.section-divider + .section {
+  padding-top: 0;
+}
+
+.section-divider + .closing {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .section-divider.container { margin-block: 36px; }
+}

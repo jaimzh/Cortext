@@ -1,5 +1,5 @@
 export const asciiC = '  ____\n / ___|\n| |    \n| |___ \n \\____|';
-export const tagline = 'Your voice, anywhere.';
+export const tagline = 'Control your computer from your phone.';
 
 // Same pyfiglet "big" wordmark used by the Python TUI.
 export const asciiWordmark = [
