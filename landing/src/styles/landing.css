@@ -12,7 +12,7 @@ h1, h2, h3 { color: var(--heading); line-height: 1.12; font-weight: 550; }
 .site-header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border); background: #111111f5; backdrop-filter: blur(16px); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; min-height: 82px; gap: 24px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; font: bold 18px var(--mono); letter-spacing: 2px; white-space: nowrap; }
-.brand-mark { color: var(--accent-light); font-size: 21px; letter-spacing: -2px; }
+.brand-mark { margin: 0; color: var(--accent); font: 8px/1 monospace; letter-spacing: 0; white-space: pre; flex-shrink: 0; }
 .brand-dot { color: var(--accent-light); }
 .nav-links { display: flex; align-items: center; gap: 25px; font-size: 13px; }
 .nav-links a { color: var(--muted); }
