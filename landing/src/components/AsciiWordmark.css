@@ -4,13 +4,3 @@
   letter-spacing: 0;
   line-height: 1.2;
 }
-
-.ascii-wordmark pre {
-  display: inline-block;
-  margin: 0;
-  color: var(--accent);
-  font: 400 clamp(7px, 2.4vw, 40px)/1.2 var(--mono);
-  letter-spacing: 0;
-  white-space: pre;
-  text-align: left;
-}

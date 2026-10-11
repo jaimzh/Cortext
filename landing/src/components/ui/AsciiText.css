@@ -1,0 +1,16 @@
+.ascii-text {
+  width: 100%;
+  overflow: hidden;
+}
+
+.ascii-text-frame {
+  width: 100%;
+  margin: 0;
+  font-family: monospace;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: pre;
+  user-select: none;
+}
