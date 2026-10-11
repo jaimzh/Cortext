@@ -1,0 +1,12 @@
+export const asciiC = '  ____\n / ___|\n| |    \n| |___ \n \\____|';
+export const tagline = 'Your voice, anywhere.';
+
+// Same pyfiglet "big" wordmark used by the Python TUI.
+export const asciiWordmark = [
+    '  _____ ____  _____ _______ ________   _________ ',
+    ' / ____/ __ \\|  __ \\__   __|  ____\\ \\ / /__   __|',
+    '| |   | |  | | |__) | | |  | |__   \\ V /   | |   ',
+    '| |   | |  | |  _  /  | |  |  __|   > <    | |   ',
+    '| |___| |__| | | \\ \\  | |  | |____ / . \\   | |   ',
+    ' \\_____\\____/|_|  \\_\\ |_|  |______/_/ \\_\\  |_|   ',
+].join('\n');

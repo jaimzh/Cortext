@@ -32,3 +32,8 @@ MOUSE_TRACKPAD_GUIDE.md
 # Frontend dependencies and build output
 web/node_modules/
 web/dist/
+web/.vite/
+landing/node_modules/
+landing/dist/
+landing/.vite/
+landing/.vercel/
